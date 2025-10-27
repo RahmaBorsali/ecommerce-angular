@@ -1,0 +1,58 @@
+<section class="mx-auto md:px-10 py-12">
+  <h2 class="text-3xl font-bold mb-10 text-center text-gray-900">
+    Produits Vedettes
+  </h2>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+    <article
+      *ngFor="let p of products"
+      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition"
+    >
+      <a [routerLink]="['/products', p.id]" class="block">
+        <img
+          [src]="p.image"
+          [alt]="p.title"
+          class="h-48 w-full object-cover group-hover:scale-[1.02] transition-transform"
+        />
+      </a>
+
+      <div class="p-4 space-y-3">
+        <h3 class="font-semibold text-sm md:text-base leading-tight">
+          <a [routerLink]="['/products', p.id]" class="hover:text-blue-600">
+            {{ p.title }}
+          </a>
+        </h3>
+
+        <div class="flex items-center gap-1 text-[#f59e0b] text-lg drop-shadow-sm">
+          <ng-container *ngFor="let s of starArray(p.rating)">
+            <span>{{ s ? '★' : '☆' }}</span>
+          </ng-container>
+          <span class="text-gray-400 text-xs ml-1">
+            {{ p.rating | number: '1.1-1' }}
+          </span>
+        </div>
+
+        <div class="text-lg font-bold text-gray-900">
+          {{ p.price | number:'1.2-2' }}&nbsp;DT
+        </div>
+
+
+        <div class="grid grid-cols-[1fr_auto] gap-2">
+          <button
+            (click)="addToCart(p)"
+            class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 focus:ring-2 focus:ring-blue-500"
+          >
+            <i class="icon-shopping-cart mr-1 text-base"></i> Ajouter au panier
+          </button>
+
+          <a
+            [routerLink]="['/products', p.id]"
+            class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold hover:bg-gray-100"
+          >
+            Voir
+          </a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
