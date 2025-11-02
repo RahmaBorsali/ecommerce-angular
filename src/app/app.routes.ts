@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { CartItems } from './features/cart/cart-items/cart-items';
-
+import { CartItems } from './features/cart-items/cart-items';
+import { Checkout} from './features/checkout/checkout'
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {
@@ -15,6 +15,9 @@ export const routes: Routes = [
   },
   {
     path: 'cart', component: CartItems
+  },
+  {
+    path: 'checkout', component: Checkout
   }
 
 

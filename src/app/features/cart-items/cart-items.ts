@@ -3,9 +3,9 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { CartService, CartItem } from '../../../services/cart.service';
-import { Header } from "../../../shared/header/header";
-import { Footer } from "../../../shared/footer/footer";
+import { CartService, CartItem } from '../../services/cart.service';
+import { Header } from "../../shared/header/header";
+import { Footer } from "../../shared/footer/footer";
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -20,7 +20,7 @@ export class CartItems implements OnInit, OnDestroy {
 
   cart: CartItem[] = [];
   readonly SHIPPING_FEE = 8 ;
-  readonly FREE_SHIPPING_THRESHOLD = 10000; 
+  readonly FREE_SHIPPING_THRESHOLD = 10000;
   discount = 0;
   couponCode = '';
 

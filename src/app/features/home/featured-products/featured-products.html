@@ -6,24 +6,28 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
     <article
       *ngFor="let p of products"
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition"
+      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-transform duration-300"
     >
-      <a [routerLink]="['/products', p.id]" class="block">
+      <!-- Image produit -->
+      <a [routerLink]="['/products', p.id]" class="block overflow-hidden relative">
         <img
           [src]="p.image"
           [alt]="p.title"
-          class="h-48 w-full object-cover group-hover:scale-[1.02] transition-transform"
+          class="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </a>
 
+      <!-- Contenu -->
       <div class="p-4 space-y-3">
+        <!-- Titre -->
         <h3 class="font-semibold text-sm md:text-base leading-tight">
           <a [routerLink]="['/products', p.id]" class="hover:text-blue-600">
             {{ p.title }}
           </a>
         </h3>
 
-        <div class="flex items-center gap-1 text-[#f59e0b] text-lg drop-shadow-sm">
+        <!-- ⭐ Étoiles (orange ElectroSpace) -->
+        <div class="flex items-center gap-1 text-[#f97316] text-lg drop-shadow-sm">
           <ng-container *ngFor="let s of starArray(p.rating)">
             <span>{{ s ? '★' : '☆' }}</span>
           </ng-container>
@@ -32,25 +36,32 @@
           </span>
         </div>
 
-        <div class="text-lg font-bold text-gray-900">
-          {{ p.price | number:'1.2-2' }}&nbsp;DT
-        </div>
+        <!-- 💰 Prix + 🛒 Boutons -->
+        <div class="flex items-center justify-between">
+          <!-- Prix -->
+          <div class="text-lg font-extrabold text-[#2563eb]">
+            {{ p.price | number:'1.2-2' }}&nbsp;DT
+          </div>
 
+          <div class="flex items-center gap-2">
+            <!-- Bouton panier (orange ElectroSpace) -->
+            <button
+              (click)="addToCart(p)"
+              class="flex items-center justify-center rounded-full bg-[#f97316] hover:bg-[#ea580c] text-white w-9 h-9 shadow-sm transition"
+              title="Ajouter au panier"
+            >
+              <i class="icon-shopping-cart text-base"></i>
+            </button>
 
-        <div class="grid grid-cols-[1fr_auto] gap-2">
-          <button
-            (click)="addToCart(p)"
-            class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500 focus:ring-2 focus:ring-blue-500"
-          >
-            <i class="icon-shopping-cart mr-1 text-base"></i> Ajouter au panier
-          </button>
-
-          <a
-            [routerLink]="['/products', p.id]"
-            class="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold hover:bg-gray-100"
-          >
-            Voir
-          </a>
+            <!-- Bouton voir -->
+            <a
+              [routerLink]="['/products', p.id]"
+              class="flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-500 w-9 h-9 transition"
+              title="Voir le produit"
+            >
+              <i class="icon-eye text-base"></i>
+            </a>
+          </div>
         </div>
       </div>
     </article>
