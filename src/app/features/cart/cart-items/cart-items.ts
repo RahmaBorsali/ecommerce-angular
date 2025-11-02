@@ -3,19 +3,26 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { CartService, CartItem } from '../../services/cart.service';
+import { CartService, CartItem } from '../../../services/cart.service';
+import { Header } from "../../../shared/header/header";
+import { Footer } from "../../../shared/footer/footer";
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-cart-items',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, Header, Footer,FormsModule],
   templateUrl: './cart-items.html',
 })
 export class CartItems implements OnInit, OnDestroy {
+  Math = Math;
   private cartSvc = inject(CartService);
 
   cart: CartItem[] = [];
-  readonly SHIPPING_FEE = 9.99; // DT
+  readonly SHIPPING_FEE = 8 ;
+  readonly FREE_SHIPPING_THRESHOLD = 10000; 
+  discount = 0;
+  couponCode = '';
 
   private onCartUpdated = () => this.loadCart();
   private onStorage = (e: StorageEvent) => {
@@ -43,11 +50,12 @@ export class CartItems implements OnInit, OnDestroy {
   }
 
   get shipping(): number {
+    if (this.subtotal >= this.FREE_SHIPPING_THRESHOLD) return 0;
     return this.subtotal > 0 ? this.SHIPPING_FEE : 0;
   }
 
   get total(): number {
-    return this.subtotal + this.shipping;
+    return Math.max(0, this.subtotal - this.discount) + this.shipping;
   }
 
   trackById = (_: number, item: CartItem) => item.id;
@@ -102,4 +110,22 @@ export class CartItems implements OnInit, OnDestroy {
       timerProgressBar: true,
     });
   }
+  applyCoupon() {
+    const code = (this.couponCode || '').trim().toUpperCase();
+    if (!code) return;
+
+    if (code === 'FREESHIP') {
+      this.discount = 0;
+      this.couponCode = '';
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Livraison offerte appliquée', timer: 1500, showConfirmButton: false });
+    } else if (code === 'SALE10') {
+      // 10% du sous-total
+      this.discount = +(this.subtotal * 0.10).toFixed(2);
+      this.couponCode = '';
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Remise 10% appliquée', timer: 1500, showConfirmButton: false });
+    } else {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Code invalide', timer: 1500, showConfirmButton: false });
+    }
+  }
+
 }

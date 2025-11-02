@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { CartItems } from './features/cart-items/cart-items';
+import { CartItems } from './features/cart/cart-items/cart-items';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -12,7 +12,11 @@ export const routes: Routes = [
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth-module').then(m => m.AuthModule)
+  },
+  {
+    path: 'cart', component: CartItems
   }
+
 
 
 ];

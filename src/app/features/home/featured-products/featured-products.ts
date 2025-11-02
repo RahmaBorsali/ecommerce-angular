@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component,inject  } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
 type Product = {
   id: number;
@@ -16,6 +17,7 @@ type Product = {
   styleUrl: './featured-products.scss',
 })
 export class FeaturedProducts {
+  private cartSvc = inject(CartService);
   products: Product[] = [
     {
       id: 1,
@@ -76,6 +78,13 @@ export class FeaturedProducts {
   ];
 
   addToCart(product: Product) {
+    this.cartSvc.addToCart({
+      id: product.id,
+      name: product.title,      // 👈 le CartItems lit "name", pas "title"
+      price: product.price,
+      image: product.image,
+      quantity: 1,        // 👈 important pour le compteur
+    });
     Swal.fire({
       title: 'Ajouté au panier 🛒',
       text: `${product.title} a été ajouté avec succès.`,
