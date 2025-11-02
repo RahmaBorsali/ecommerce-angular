@@ -1,0 +1,71 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <!-- Logo -->
+    <div class="text-center mb-6">
+      <img src="assets/logo6.jpg" alt="ElectroSpace Logo" class="w-16 h-16 mx-auto rounded-xl shadow-md mb-3" />
+      <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 via-gray-700 to-orange-400 bg-clip-text text-transparent">
+        ElectroSpace
+      </h1>
+      <p class="text-gray-500 mt-2">Connectez-vous à votre compte</p>
+    </div>
+
+    <!-- Formulaire -->
+    <form [formGroup]="authForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <!-- Username -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Nom d'utilisateur</label>
+        <input
+          type="text"
+          formControlName="username"
+          placeholder="ex: johnd"
+          class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div *ngIf="authForm.get('username')?.hasError('required') && authForm.get('username')?.touched"
+          class="text-red-500 text-sm mt-1">
+          Le nom d'utilisateur est obligatoire.
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Mot de passe</label>
+        <div class="relative">
+          <input
+            [type]="hide ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="••••••••"
+            class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button type="button" (click)="hide = !hide" class="absolute right-3 top-3 text-gray-500">
+            <i class="fa" [ngClass]="hide ? 'fa-eye-slash' : 'fa-eye'"></i>
+          </button>
+        </div>
+        <div *ngIf="authForm.get('password')?.hasError('required') && authForm.get('password')?.touched"
+          class="text-red-500 text-sm mt-1">
+          Le mot de passe est obligatoire.
+        </div>
+      </div>
+
+      <!-- Message d’erreur -->
+      <div *ngIf="error" class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm">
+        {{ error }}
+      </div>
+
+      <!-- Bouton -->
+      <button
+        type="submit"
+        [disabled]="loading || !authForm.valid"
+        class="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
+      >
+        <span *ngIf="!loading">Se connecter</span>
+        <span *ngIf="loading"><i class="fa fa-spinner fa-spin"></i> Connexion...</span>
+      </button>
+
+      <!-- Lien inscription -->
+      <p class="text-center text-gray-600 text-sm mt-4">
+        Pas de compte ?
+        <a routerLink="/auth/signup" class="text-blue-600 font-semibold hover:underline">Créer un compte</a>
+      </p>
+    </form>
+  </div>
+</div>

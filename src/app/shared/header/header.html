@@ -1,0 +1,189 @@
+<header
+  class="bg-gradient-to-r from-white via-blue-50 to-white shadow-lg sticky top-0 z-50 backdrop-blur-sm bg-opacity-95"
+>
+  <div class="container mx-auto px-4">
+    <div class="flex items-center justify-between py-4">
+      <!-- ✅ LOGO + NOM -->
+      <a routerLink="/" class="flex items-center gap-3">
+        <!-- IMAGE DU LOGO -->
+        <img
+          src="assets/logo6.jpg"
+          alt="ElectroSpace Logo"
+          class="w-12 h-12 rounded-xl object-cover shadow-md"
+        />
+<span
+  class="text-2xl font-bold bg-gradient-to-r from-blue-600 via-gray-700 to-orange-400 bg-clip-text text-transparent"
+>
+  ElectroSpace
+</span>
+
+      </a>
+
+      <!-- NAVIGATION -->
+      <nav class="hidden lg:flex items-center gap-8">
+        <a
+          routerLink="/"
+          routerLinkActive="text-blue-600"
+          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
+        >
+          Accueil
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
+          ></span>
+        </a>
+        <a
+          routerLink="/products"
+          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
+        >
+          Catalogue
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
+          ></span>
+        </a>
+        <a
+          [routerLink]="['/products']"
+          [queryParams]="{ category: 'Électronique' }"
+          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
+        >
+          Électronique
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
+          ></span>
+        </a>
+        <a
+          [routerLink]="['/products']"
+          [queryParams]="{ category: 'Gaming' }"
+          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
+        >
+          Gaming
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
+          ></span>
+        </a>
+        <a
+          [routerLink]="['/products']"
+          [queryParams]="{ category: 'Audio' }"
+          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
+        >
+          Audio
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
+          ></span>
+        </a>
+      </nav>
+
+      <!-- ACTIONS (recherche, panier, profil, menu mobile) -->
+      <div class="flex items-center gap-3">
+        <button
+          (click)="toggleSearch()"
+          class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+        >
+          <i class="icon-search text-lg text-gray-700"></i>
+        </button>
+
+        <a
+          routerLink="/cart"
+          class="relative w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+        >
+          <i class="icon-shopping-cart text-lg text-gray-700"></i>
+          <span
+            *ngIf="cartCount > 0"
+            class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md"
+          >
+            {{ cartCount }}
+          </span>
+        </a>
+
+         <!-- 👤 Profil -->
+        <a
+          routerLink="/auth/signin"
+          class="hidden md:flex w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 items-center justify-center shadow-md transition-all"
+        >
+          <i class="icon-user text-lg text-white"></i>
+        </a>
+
+        <button
+          (click)="toggleMenu()"
+          class="lg:hidden w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+        >
+          <i
+            [ngClass]="isMenuOpen ? 'icon-x' : 'icon-menu'"
+            class="text-lg text-gray-700"
+          ></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRE DE RECHERCHE -->
+    <!-- BARRE DE RECHERCHE -->
+    <div *ngIf="isSearchOpen" class="pb-4">
+      <form (submit)="handleSearch($event)" class="flex gap-2">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          name="search"
+          placeholder="Rechercher des produits..."
+          class="flex-1 px-4 py-3 border-2 border-blue-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+          autofocus
+        />
+        <button
+          type="submit"
+          class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-xl hover:shadow-lg transition-all font-medium"
+        >
+          Rechercher
+        </button>
+      </form>
+    </div>
+
+    <!-- MENU MOBILE -->
+    <nav *ngIf="isMenuOpen" class="lg:hidden pb-4">
+      <ul class="flex flex-col gap-3 mt-4">
+        <li>
+          <a
+            routerLink="/"
+            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
+            >Accueil</a
+          >
+        </li>
+        <li>
+          <a
+            routerLink="/products"
+            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
+            >Catalogue</a
+          >
+        </li>
+        <li>
+          <a
+            [routerLink]="['/products']"
+            [queryParams]="{ category: 'Électronique' }"
+            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
+            >Électronique</a
+          >
+        </li>
+        <li>
+          <a
+            [routerLink]="['/products']"
+            [queryParams]="{ category: 'Gaming' }"
+            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
+            >Gaming</a
+          >
+        </li>
+        <li>
+          <a
+            [routerLink]="['/products']"
+            [queryParams]="{ category: 'Audio' }"
+            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
+            >Audio</a
+          >
+        </li>
+        <li class="md:hidden">
+          <a
+            routerLink="/auth/signin"
+            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
+            >Mon Compte</a
+          >
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,85 @@
+<!-- src/app/features/cart/cart-items.component.html -->
+
+<!-- Panier vide -->
+<div *ngIf="cart.length === 0; else hasItems" class="text-center py-16">
+  <div class="icon-shopping-cart text-6xl text-gray-300 mb-4"></div>
+  <h2 class="text-2xl font-semibold mb-4">Votre panier est vide</h2>
+  <a routerLink="/home" class="btn-primary inline-block">Continuer vos achats</a>
+</div>
+
+<!-- Panier avec articles -->
+<ng-template #hasItems>
+  <div class="flex flex-col lg:flex-row gap-8">
+
+    <!-- Liste d'articles -->
+    <div class="flex-1 space-y-4">
+      <div
+        *ngFor="let item of cart; trackBy: trackById"
+        class="bg-white rounded-lg shadow p-4 flex gap-4"
+      >
+        <img [src]="item.image" [alt]="item.name" class="w-24 h-24 object-cover rounded" />
+
+        <div class="flex-1">
+          <h3 class="font-semibold text-lg mb-2">{{ item.name }}</h3>
+          <p class="text-[var(--primary-color)] font-bold">
+            {{ item.price | number:'1.2-2' }} DT
+          </p>
+        </div>
+
+        <div class="flex flex-col items-end gap-2">
+          <div class="flex items-center gap-2">
+            <button
+              (click)="dec(item)"
+              [disabled]="item.quantity <= 1"
+              class="w-8 h-8 border rounded hover:bg-gray-100 disabled:opacity-40"
+              aria-label="Diminuer la quantité"
+            >-</button>
+
+            <span class="w-12 text-center">{{ item.quantity }}</span>
+
+            <button
+              (click)="inc(item)"
+              class="w-8 h-8 border rounded hover:bg-gray-100"
+              aria-label="Augmenter la quantité"
+            >+</button>
+          </div>
+
+          <button (click)="remove(item)" class="text-red-500 hover:text-red-700" aria-label="Supprimer">
+            <div class="icon-trash-2 text-xl"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Actions liste -->
+      <div class="flex justify-between">
+        <a routerLink="/home" class="underline hover:text-blue-600">← Continuer vos achats</a>
+        <button (click)="clearAll()" class="text-sm text-red-600 hover:text-red-700">Vider le panier</button>
+      </div>
+    </div>
+
+    <!-- Récap -->
+    <div class="lg:w-96">
+      <div class="bg-white rounded-lg shadow p-6 sticky top-24">
+        <h2 class="text-xl font-bold mb-4">Récapitulatif</h2>
+
+        <div class="space-y-3 mb-4">
+          <div class="flex justify-between">
+            <span>Sous-total</span>
+            <span>{{ subtotal | number:'1.2-2' }} DT</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Livraison</span>
+            <span>{{ shipping | number:'1.2-2' }} DT</span>
+          </div>
+          <div class="border-t pt-3 flex justify-between font-bold text-lg">
+            <span>Total</span>
+            <span class="text-[var(--primary-color)]">{{ total | number:'1.2-2' }} DT</span>
+          </div>
+        </div>
+
+        <a routerLink="/checkout" class="btn-primary w-full block text-center">Procéder au paiement</a>
+      </div>
+    </div>
+
+  </div>
+</ng-template>

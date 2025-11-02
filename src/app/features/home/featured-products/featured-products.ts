@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import Swal from 'sweetalert2';
 type Product = {
   id: number;
   title: string;
@@ -75,7 +76,15 @@ export class FeaturedProducts {
   ];
 
   addToCart(product: Product) {
-    alert(`${product.title} ajouté au panier 🛒`);
+    Swal.fire({
+      title: 'Ajouté au panier 🛒',
+      text: `${product.title} a été ajouté avec succès.`,
+      icon: 'success',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#2563eb',
+      timer: 5000,
+      timerProgressBar: true,
+    });
   }
 
   starArray(rating: number): number[] {
