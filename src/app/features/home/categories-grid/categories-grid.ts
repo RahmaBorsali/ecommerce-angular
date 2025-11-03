@@ -19,6 +19,36 @@ export class CategoriesGrid {
     { name: 'Gaming',       slug: 'gaming',       image: 'https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=600', icon: 'gamepad-2' },
     { name: 'Photo',        slug: 'photo',        image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600', icon: 'camera' },
     { name: 'Accessoires',  slug: 'accessoires',  image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600', icon: 'package' },
+    {
+      name: 'Vêtements Homme',
+      slug: "men's clothing",
+      image: 'https://images.unsplash.com/photo-1521334884684-d80222895322?w=800',
+      icon: 'shirt',
+    },
+    {
+      name: 'Vêtements Femme',
+      slug: "women's clothing",
+      image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800',
+      icon: 'shopping-bag',
+    },
+    {
+      name: 'Bijoux',
+      slug: 'jewelery',
+      image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=800',
+      icon: 'gem',
+    },
+    {
+      name: 'Maison',
+      slug: 'maison',
+      image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800',
+      icon: 'home',
+    },
+    {
+      name: 'Beauté & Soins',
+      slug: 'beaute',
+      image: 'https://images.unsplash.com/photo-1600180758890-6a3b4b3a5a2f?w=800',
+      icon: 'sparkles',
+    },
   ];
 
     iconClass(name: string) { return `icon-${name}`; }

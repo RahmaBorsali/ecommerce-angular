@@ -27,6 +27,9 @@ export class FakeStore {
     return this.http.get<string[]>(`${this.base}/products/categories`)
       .pipe(catchError(err => throwError(() => err)));
   }
+  getByCategory(cat: string): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.base}/products/category/${cat}`);
+  }
 
   getProduct(id: number): Observable<Product> {
     return this.http.get<Product>(`${this.base}/products/${id}`)
