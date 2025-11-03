@@ -3,35 +3,32 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { CartService, CartItem } from '../../services/cart.service';
-import { Header } from "../../shared/header/header";
-import { Footer } from "../../shared/footer/footer";
+import { CartService, CartItem, CartMeta } from '../../services/cart.service';
+import { Header } from '../../shared/header/header';
+import { Footer } from '../../shared/footer/footer';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-cart-items',
   standalone: true,
-  imports: [CommonModule, RouterLink, Header, Footer,FormsModule],
+  imports: [CommonModule, RouterLink, Header, Footer, FormsModule],
   templateUrl: './cart-items.html',
 })
 export class CartItems implements OnInit, OnDestroy {
-  Math = Math;
+  Math = Math; // pour l’utilisation dans le template
   private cartSvc = inject(CartService);
 
   cart: CartItem[] = [];
-  readonly SHIPPING_FEE = 8 ;
-  readonly FREE_SHIPPING_THRESHOLD = 10000;
-  discount = 0;
+  meta: CartMeta = this.cartSvc.getMeta();
   couponCode = '';
 
-  private onCartUpdated = () => this.loadCart();
+  private onCartUpdated = () => this.load();
   private onStorage = (e: StorageEvent) => {
-    if (e.key === 'cart' || e.key === null) this.loadCart();
+    if (e.key === 'cart' || e.key === 'cart_meta' || e.key === null) this.load();
   };
 
   ngOnInit(): void {
-    this.loadCart();
-    // sync interne + multi-onglet
+    this.load();
     window.addEventListener('cartUpdated', this.onCartUpdated);
     window.addEventListener('storage', this.onStorage);
   }
@@ -41,35 +38,35 @@ export class CartItems implements OnInit, OnDestroy {
     window.removeEventListener('storage', this.onStorage);
   }
 
-  loadCart() {
+  load() {
     this.cart = this.cartSvc.getCart();
+    this.meta = this.cartSvc.getMeta();
   }
 
+  // --- Totaux unifiés via service ---
   get subtotal(): number {
-    return this.cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    return this.cartSvc.calcSubtotal(this.cart);
   }
-
+  get discount(): number {
+    return this.cartSvc.calcDiscount(this.subtotal, this.meta);
+  }
   get shipping(): number {
-    if (this.subtotal >= this.FREE_SHIPPING_THRESHOLD) return 0;
-    return this.subtotal > 0 ? this.SHIPPING_FEE : 0;
+    return this.cartSvc.calcShipping(this.subtotal, this.meta);
   }
-
   get total(): number {
-    return Math.max(0, this.subtotal - this.discount) + this.shipping;
+    return this.cartSvc.calcTotal(this.subtotal, this.shipping, this.discount);
   }
 
   trackById = (_: number, item: CartItem) => item.id;
 
   dec(item: CartItem) {
-    const newQty = item.quantity - 1;
-    this.cartSvc.updateQuantity(item.id, newQty);
-    this.loadCart();
+    this.cartSvc.updateQuantity(item.id, item.quantity - 1);
+    this.load();
   }
 
   inc(item: CartItem) {
-    const newQty = item.quantity + 1;
-    this.cartSvc.updateQuantity(item.id, newQty);
-    this.loadCart();
+    this.cartSvc.updateQuantity(item.id, item.quantity + 1);
+    this.load();
   }
 
   async remove(item: CartItem) {
@@ -84,7 +81,7 @@ export class CartItems implements OnInit, OnDestroy {
     });
     if (res.isConfirmed) {
       this.cartSvc.removeFromCart(item.id);
-      this.loadCart();
+      this.load();
       Swal.fire({
         toast: true,
         position: 'top-end',
@@ -99,7 +96,7 @@ export class CartItems implements OnInit, OnDestroy {
 
   clearAll() {
     this.cartSvc.clearCart();
-    this.loadCart();
+    this.load();
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -110,22 +107,45 @@ export class CartItems implements OnInit, OnDestroy {
       timerProgressBar: true,
     });
   }
+
   applyCoupon() {
     const code = (this.couponCode || '').trim().toUpperCase();
     if (!code) return;
 
-    if (code === 'FREESHIP') {
-      this.discount = 0;
+    if (code === 'FREESHIP' || code === 'SALE10') {
+      this.meta = this.cartSvc.setMeta({ couponCode: code });
       this.couponCode = '';
-      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Livraison offerte appliquée', timer: 1500, showConfirmButton: false });
-    } else if (code === 'SALE10') {
-      // 10% du sous-total
-      this.discount = +(this.subtotal * 0.10).toFixed(2);
-      this.couponCode = '';
-      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Remise 10% appliquée', timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: code === 'FREESHIP' ? 'Livraison offerte appliquée' : 'Remise 10% appliquée',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      this.load();
     } else {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Code invalide', timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Code invalide',
+        timer: 1500,
+        showConfirmButton: false,
+      });
     }
   }
 
+  clearCoupon() {
+    this.meta = this.cartSvc.setMeta({ couponCode: '' });
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'info',
+      title: 'Code promo retiré',
+      timer: 1200,
+      showConfirmButton: false,
+    });
+    this.load();
+  }
 }
