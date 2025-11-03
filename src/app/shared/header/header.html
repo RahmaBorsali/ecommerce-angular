@@ -101,13 +101,20 @@
         </a>
 
         <!-- 👤 Profil -->
-        <a
-          routerLink="/auth/signin"
-          class="hidden md:flex w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 items-center justify-center shadow-md transition-all"
+        <button
+          (click)="goToAccount()"
+          class="hidden md:flex w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 items-center justify-center shadow-md transition-all overflow-hidden"
+          [title]="isLoggedIn ? 'Voir mon profil' : 'Se connecter'"
         >
-          <i class="icon-user text-lg text-white"></i>
-        </a>
+          <ng-container *ngIf="avatarUrl; else userIcon">
+            <img [src]="avatarUrl" alt="avatar" class="w-10 h-10 object-cover" />
+          </ng-container>
+          <ng-template #userIcon>
+            <i class="icon-user text-lg text-white"></i>
+          </ng-template>
+        </button>
 
+        <!-- Menu burger (mobile) -->
         <button
           (click)="toggleMenu()"
           class="lg:hidden w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -184,13 +191,12 @@
             >Audio</a
           >
         </li>
-        <li class="md:hidden">
-          <a
-            routerLink="/auth/signin"
-            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
-            >Mon Compte</a
+        <button
+            (click)="goToAccount(); isMenuOpen=false"
+            class="w-full text-left px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
           >
-        </li>
+            Mon Compte
+          </button>
       </ul>
     </nav>
   </div>

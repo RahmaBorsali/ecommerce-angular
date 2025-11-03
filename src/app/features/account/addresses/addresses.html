@@ -1,0 +1,106 @@
+<div class="p-6 lg:p-8">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Adresses</h2>
+    <button
+      (click)="startAdd()"
+      *ngIf="!editId()"
+      class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:opacity-90"
+    >
+      Nouvelle adresse
+    </button>
+  </div>
+
+  <!-- Form -->
+  <form
+    *ngIf="editId()"
+    [formGroup]="form"
+    class="rounded-2xl border bg-white p-4 lg:p-6 mb-6"
+  >
+    <div class="grid gap-4">
+      <div>
+        <label class="text-sm">Nom complet</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="fullName" />
+      </div>
+
+      <div>
+        <label class="text-sm">Adresse</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="line1" />
+      </div>
+
+      <div>
+        <label class="text-sm">Ville</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="city" />
+      </div>
+
+      <div>
+        <label class="text-sm">Pays</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="country" />
+      </div>
+
+      <label class="flex items-center gap-2">
+        <input type="checkbox" formControlName="isDefault" class="h-4 w-4" />
+        Définir comme adresse par défaut
+      </label>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <button (click)="save()" type="button" class="px-4 py-2 rounded-lg bg-blue-600 text-white">
+        Enregistrer
+      </button>
+      <button (click)="cancel()" type="button" class="px-4 py-2 rounded-lg border">Annuler</button>
+    </div>
+  </form>
+
+  <!-- Liste -->
+  <div *ngIf="addresses().length === 0" class="text-center p-10 rounded-xl border bg-white">
+    <div class="text-5xl mb-2">🏠</div>
+    <p class="font-medium">Aucune adresse enregistrée.</p>
+    <button (click)="startAdd()" class="mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white">
+      Ajouter une adresse
+    </button>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div *ngFor="let a of addresses()" class="rounded-2xl border bg-white p-4 lg:p-6">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="font-semibold">{{ a.fullName }}</div>
+        </div>
+        <span
+          *ngIf="a.isDefault"
+          class="text-xs rounded-full px-2 py-1 bg-emerald-100 text-emerald-800"
+          >Par défaut</span
+        >
+      </div>
+      <div class="mt-2 text-gray-700">
+        {{ a.line1 }}<span *ngIf="a.city">, {{ a.city }}</span><br />
+        <span *ngIf="a.country">{{ a.country }}</span>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button
+        (click)="startEdit(a)"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-all duration-200"
+      >
+        <i class="icon-edit text-sm"></i>
+        <span>Modifier</span>
+      </button>
+
+      <!-- 🟥 Bouton Supprimer -->
+      <button
+        (click)="remove(a)"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all duration-200"
+      >
+        <i class="icon-trash text-sm"></i>
+        <span>Supprimer</span>
+      </button>
+        <button
+          *ngIf="!a.isDefault"
+          (click)="setDefault(a)"
+          class="px-3 py-1.5 rounded-lg bg-blue-600 text-white"
+        >
+          Par défaut
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

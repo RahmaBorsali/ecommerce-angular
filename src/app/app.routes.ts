@@ -3,6 +3,8 @@ import { CartItems } from './features/cart-items/cart-items';
 import { Checkout} from './features/checkout/checkout'
 import { CatalogPage } from './features/catalog/catalog.page/catalog.page';
 import { ProductDetailPage } from './features/product-details.page/product-details.page' ;
+import { Profile } from './features/account/profile/profile';
+import {authGuard} from './guards/auth.guard'
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {
@@ -26,6 +28,37 @@ export const routes: Routes = [
   },
   {
     path: 'products/:id', component: ProductDetailPage
+  },
+  
+  {
+    path: 'account',
+    canActivate: [authGuard], // protège toutes les sous-pages
+    loadComponent: () =>
+      import('./features/account/account-layout/account-layout').then(m => m.AccountLayout),
+
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'profile' },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/account/profile/profile').then(m => m.Profile),
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/account/orders/orders').then(m => m.AccountOrders),
+      },
+      {
+        path: 'wishlist',
+        loadComponent: () =>
+          import('./features/account/wishlist/wishlist').then(m => m.AccountWishlist),
+      },
+      {
+        path: 'addresses',
+        loadComponent: () =>
+          import('./features/account/addresses/addresses').then(m => m.AccountAddresses),
+      },
+    ],
   },
 
 
