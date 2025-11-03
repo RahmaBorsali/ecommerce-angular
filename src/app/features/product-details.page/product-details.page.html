@@ -1,0 +1,81 @@
+<div class="min-h-screen bg-[var(--bg-light,#f9fafb)]">
+  <app-header></app-header>
+
+  <main class="container mx-auto px-4 py-8">
+    <ng-container *ngIf="loading">Chargement…</ng-container>
+    <ng-container *ngIf="error && !loading">Produit introuvable</ng-container>
+
+    <ng-container *ngIf="product && !loading">
+      <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <!-- === Colonne gauche : Image + miniatures === -->
+        <div>
+          <!-- Image principale -->
+          <div class="flex items-center justify-center">
+            <img
+              [src]="images[current] || product.image"
+              [alt]="product.title"
+              class="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain rounded-xl shadow-sm transition-transform duration-300 hover:scale-105"
+            />
+          </div>
+
+          <!-- Miniatures -->
+          <div class="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-3">
+            <button
+              *ngFor="let img of images; index as i"
+              type="button"
+              (click)="select(i)"
+              [attr.aria-pressed]="isActive(i)"
+              class="relative rounded-lg overflow-hidden ring-2 transition hover:ring-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              [class.ring-blue-600]="isActive(i)"
+              [class.ring-transparent]="!isActive(i)"
+            >
+              <img
+                [src]="img"
+                [alt]="'Aperçu ' + (i + 1)"
+                class="w-full h-16 sm:h-20 object-cover"
+              />
+              <span
+                *ngIf="isActive(i)"
+                class="pointer-events-none absolute inset-0 ring-2 ring-blue-600 rounded-lg"
+              ></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- === Colonne droite : Détails === -->
+        <div>
+          <h1 class="text-3xl font-bold mb-4">{{ product.title }}</h1>
+
+          <div class="flex items-center mb-4 text-[#f59e0b]">
+            <span *ngFor="let s of [1,2,3,4,5]" class="select-none">
+              {{ s <= rateRounded() ? '★' : '☆' }}
+            </span>
+            <span class="ml-2 text-gray-600">({{ rateRaw() | number:'1.1-1' }})</span>
+          </div>
+
+          <p class="text-4xl font-bold text-blue-600 mb-6">
+            {{ product.price | number:'1.2-2' }} DT
+          </p>
+          <p class="text-gray-700 mb-6">{{ product.description }}</p>
+
+          <div class="flex gap-4 mb-6">
+            <div class="flex items-center border rounded-lg">
+              <button (click)="decQty()" class="px-4 py-2">-</button>
+              <span class="px-4 py-2">{{ qty }}</span>
+              <button (click)="incQty()" class="px-4 py-2">+</button>
+            </div>
+
+            <button
+              (click)="addToCart()"
+              class="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex-1"
+            >
+              Ajouter au panier
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </main>
+
+  <app-footer></app-footer>
+</div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, HostListener, ElementRef } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 @Component({
@@ -9,12 +9,13 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
-export class Header implements OnInit, OnDestroy{
+export class Header implements OnInit, OnDestroy {
   logoUrl = 'assets/logo.png';
   searchQuery = '';
   cartCount = 0;
   isMenuOpen = false;
   isSearchOpen = false;
+  private el = inject(ElementRef);
 
   private onCartEvents = () => this.updateCartCount();
 
@@ -35,17 +36,41 @@ export class Header implements OnInit, OnDestroy{
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  toggleSearch(): void {
+  toggleSearch() {
     this.isSearchOpen = !this.isSearchOpen;
+    if (this.isSearchOpen) {
+      // focus après rendu
+      setTimeout(() => {
+        const input: HTMLInputElement | null =
+          this.el.nativeElement.querySelector('#global-search');
+        input?.focus();
+        input?.select();
+      }, 0);
+    }
   }
 
-  handleSearch(event: Event): void {
-    event.preventDefault();
-    const q = this.searchQuery.trim();
-    if (!q) return;
-    // équivalent à catalog.html?search=...
-    this.router.navigate(['/products'], { queryParams: { search: q } });
+  closeSearch() {
     this.isSearchOpen = false;
+  }
+
+  handleSearch(ev?: Event) {
+    ev?.preventDefault();
+    const q = (this.searchQuery || '').trim();
+    this.router.navigate(['/products'], {
+      queryParams: q ? { q } : {},
+      queryParamsHandling: '',
+    });
+    // option: garder ouvert pour modifier; sinon refermer:
+    this.closeSearch();
+  }
+
+  // Raccourci clavier "/" pour ouvrir et focus
+  @HostListener('document:keydown', ['$event'])
+  onKey(e: KeyboardEvent) {
+    if (e.key === '/' && !this.isSearchOpen) {
+      e.preventDefault();
+      this.toggleSearch();
+    }
   }
 
   private updateCartCount(): void {

@@ -5,7 +5,6 @@ import { catchError } from 'rxjs/operators';
 
 type FakeStoreLoginReq = { username: string; password: string };
 type FakeStoreLoginRes = { token: string };
-
 @Injectable({ providedIn: 'root' })
 export class AuthFakeStore {
   private baseUrl = 'https://fakestoreapi.com';

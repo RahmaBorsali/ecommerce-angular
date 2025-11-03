@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { CartService, CartItem, CartMeta } from '../../services/cart.service';
 import { Footer } from '../../shared/footer/footer';
 import { Header } from '../../shared/header/header';
+import { cardNumber } from '../../utils/card-number';
 
 @Component({
   selector: 'app-checkout',
@@ -38,7 +39,7 @@ export class Checkout implements OnInit, OnDestroy {
 
   // Étape 2
   step2 = this.fb.nonNullable.group({
-    cardNumber: ['', [Validators.required, Validators.pattern(/^\d{16}$/)]],
+    cardNumber: ['', [Validators.required, cardNumber]],
     cardName: ['', Validators.required],
     expiryDate: ['', [Validators.required, Validators.pattern(/^\d{2}\/\d{2}$/)]], // MM/AA
     cvv: ['', [Validators.required, Validators.pattern(/^\d{3}$/)]],
@@ -109,12 +110,12 @@ export class Checkout implements OnInit, OnDestroy {
       });
       return;
     }
-    this.loading = true;
-    await Swal.fire({
-      title: 'Paiement en cours...',
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-    });
+  this.loading = true;
+  await Swal.fire({
+    title: 'Paiement en cours...',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
 
     setTimeout(() => {
       Swal.close();
