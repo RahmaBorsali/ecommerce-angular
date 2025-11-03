@@ -6,11 +6,13 @@ import { FormsModule } from '@angular/forms';
 import { Product } from '../../../services/product-store';
 import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
+import { Header } from "../../../shared/header/header";
+import { Footer } from "../../../shared/footer/footer";
 
 @Component({
   selector: 'app-product-grid',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, Header, Footer],
   templateUrl: './product-grid.html',
 })
 export class ProductGrid implements OnChanges {
@@ -48,6 +50,7 @@ export class ProductGrid implements OnChanges {
     if (changes['initialCategory']) {
       this.selectedCategory = this.initialCategory || '';
     }
+
 
     this.applyAll();
   }

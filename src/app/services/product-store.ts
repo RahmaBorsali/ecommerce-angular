@@ -1,16 +1,27 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map, of, switchMap, Observable,throwError  } from 'rxjs';
+/** Types additionnels */
+export type Spec = { label: string; value: string };
+export type Review = { author: string; rating: number; date: string; comment: string };
 
+/** Modèle produit enrichi */
 export type Product = {
   id: number;
   title: string;
   price: number;
   rating: number; // 0..5
   image: string;
-  category: string; // 👈 ajouté
-  description?: string; // optionnel
+  category: string;
+  description?: string;
+  // 👇 champs propres à chaque produit
+  stock?: number;
+  specs?: Spec[];
+  reviews?: Review[];
+  images?: string[];
 };
 
-const PRODUCTS: Product[] = [
+const PRODUCTS_RAW: Product[] = [
   {
     id: 1,
     title: 'Smartphone Pro X',
@@ -254,16 +265,332 @@ const PRODUCTS: Product[] = [
     rating: 4.3,
     description: 'Surface ultra-lisse 900x400mm',
   },
+  {
+    id: 28,
+    title: 'Crème Hydratante Naturelle',
+    price: 59,
+    category: 'beaute',
+    image: 'https://images.unsplash.com/photo-1580835465455-97c6cd5ca77e?w=400',
+    rating: 4.7,
+    description: 'Crème visage hydratante à base d’aloé vera et huiles naturelles.',
+  },
+  {
+    id: 29,
+    title: 'Shampooing Bio Revitalisant',
+    price: 39,
+    category: 'beaute',
+    image: 'https://images.unsplash.com/photo-1580717978060-1bfb357ddcfe?w=400',
+    rating: 4.5,
+    description: 'Shampooing sans sulfate pour cheveux doux et brillants.',
+  },
+  {
+    id: 30,
+    title: 'Aspirateur Sans Fil Cyclone X200',
+    price: 299,
+    category: 'Maison',
+    image: 'https://images.unsplash.com/photo-1616627458516-90e8b9dbb0f7?w=400',
+    rating: 4.6,
+    description: 'Aspirateur sans fil puissant avec batterie longue durée et filtre HEPA.',
+  },
+  {
+    id: 31,
+    title: 'Robot de Cuisine Multifonction',
+    price: 499,
+    category: 'Maison',
+    image: 'https://images.unsplash.com/photo-1590080875831-02e7f6c7a4d3?w=400',
+    rating: 4.8,
+    description:
+      'Robot de cuisine intelligent avec balance intégrée et 12 programmes automatiques.',
+  },
 ];
+
+const DEFAULT_STOCK_BY_CAT: Record<string, number> = {
+  Électronique: 12,
+  Informatique: 8,
+  Audio: 20,
+  Gaming: 15,
+  Photo: 6,
+  Accessoires: 40,
+  Maison: 18,
+  beaute: 30,
+};
+
+const DEFAULT_SPECS_BY_CAT: Record<string, Spec[]> = {
+  Électronique: [
+    { label: 'Tension', value: '220–240 V' },
+    { label: 'Connectivité', value: 'Wi-Fi / Bluetooth' },
+    { label: 'Garantie', value: '24 mois' },
+  ],
+  Informatique: [
+    { label: 'CPU', value: 'Quad/Octa-core' },
+    { label: 'RAM', value: '8–32 Go' },
+    { label: 'Stockage', value: '256 Go – 1 To SSD' },
+  ],
+  Audio: [
+    { label: 'Réponse en fréquence', value: '20 Hz – 20 kHz' },
+    { label: 'Bluetooth', value: '5.x' },
+    { label: 'Autonomie', value: 'Jusqu’à 24 h' },
+  ],
+  Gaming: [
+    { label: 'Stockage', value: '1 To NVMe' },
+    { label: 'Sortie vidéo', value: 'HDMI 2.1' },
+    { label: 'Réseau', value: 'Wi-Fi 6 / LAN' },
+  ],
+  Photo: [
+    { label: 'Capteur', value: 'APS-C / Full-Frame' },
+    { label: 'Résolution', value: '24–45 MP' },
+    { label: 'Monture', value: 'Compat. objectifs interchangeables' },
+  ],
+  Accessoires: [
+    { label: 'Compatibilité', value: 'Windows / macOS / Android / iOS' },
+    { label: 'Matériau', value: 'ABS / Aluminium' },
+  ],
+  Maison: [
+    { label: 'Puissance', value: '800–2000 W' },
+    { label: 'Niveau sonore', value: '≤ 72 dB' },
+    { label: 'Filtration', value: 'HEPA / lavable' },
+  ],
+  beaute: [
+    { label: 'Type de peau', value: 'Tous types' },
+    { label: 'Sans', value: 'Paraben / Sulfates' },
+    { label: 'Origine', value: 'Ingrédients naturels' },
+  ],
+};
+
+const DEFAULT_REVIEWS: Review[] = [
+  {
+    author: 'Nadia',
+    rating: 5,
+    date: '2025-10-12',
+    comment: 'Qualité au top, conforme à la description.',
+  },
+  { author: 'Yassine', rating: 4, date: '2025-09-28', comment: 'Très bon rapport qualité/prix.' },
+];
+
+function withDefaults(p: Product): Product {
+  const stock = p.stock ?? DEFAULT_STOCK_BY_CAT[p.category] ?? 10;
+  const specs = p.specs && p.specs.length ? p.specs : DEFAULT_SPECS_BY_CAT[p.category] ?? [];
+  const reviews = p.reviews && p.reviews.length ? p.reviews : DEFAULT_REVIEWS;
+  const images = p.images && p.images.length ? p.images : [p.image];
+
+  return { ...p, stock, specs, reviews, images };
+}
+
+/** Personnalise finement quelques produits (exemples concrets) */
+function applyCustomizations(p: Product): Product {
+  switch (p.id) {
+    case 1: // Smartphone Pro X
+      return {
+        ...p,
+        stock: 14,
+        specs: [
+          { label: 'Écran', value: '6.5" OLED 120 Hz' },
+          { label: 'SoC', value: 'Snapdragon 8 Gen 2' },
+          { label: 'RAM', value: '12 Go' },
+          { label: 'Stockage', value: '256 Go' },
+          { label: 'Batterie', value: '5000 mAh' },
+        ],
+        reviews: [
+          {
+            author: 'Meriem',
+            rating: 5,
+            date: '2025-10-20',
+            comment: 'Ultra fluide et photos magnifiques.',
+          },
+          {
+            author: 'Adel',
+            rating: 4,
+            date: '2025-10-05',
+            comment: 'Autonomie correcte, charge très rapide.',
+          },
+        ],
+        images: [p.image, 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35ae?w=600'],
+      };
+    case 2: // Laptop Ultra 15
+      return {
+        ...p,
+        stock: 9,
+        specs: [
+          { label: 'Écran', value: '15.6" 4K UHD' },
+          { label: 'CPU', value: 'Intel Core i7 13ᵉ gen' },
+          { label: 'RAM', value: '16 Go' },
+          { label: 'Stockage', value: '1 To SSD NVMe' },
+          { label: 'Poids', value: '1.4 kg' },
+        ],
+        reviews: [
+          {
+            author: 'Hana',
+            rating: 5,
+            date: '2025-09-22',
+            comment: 'Parfait pour le montage vidéo.',
+          },
+          {
+            author: 'Sami',
+            rating: 4,
+            date: '2025-09-11',
+            comment: 'Écran sublime, ventilateurs audibles en charge.',
+          },
+        ],
+      };
+    case 3: // Casque BT
+      return {
+        ...p,
+        stock: 22,
+        specs: [
+          { label: 'ANC', value: 'Active' },
+          { label: 'Bluetooth', value: '5.3' },
+          { label: 'Autonomie', value: '30 h' },
+        ],
+      };
+    case 4: // Console
+      return {
+        ...p,
+        stock: 11,
+        specs: [
+          { label: 'SSD', value: '1 To' },
+          { label: 'Ray Tracing', value: 'Oui' },
+          { label: 'Sortie', value: 'HDMI 2.1' },
+        ],
+      };
+    case 30: // Aspirateur
+      return {
+        ...p,
+        stock: 13,
+        specs: [
+          { label: 'Puissance', value: '120 AW' },
+          { label: 'Autonomie', value: '45 min' },
+          { label: 'Filtre', value: 'HEPA' },
+        ],
+      };
+    case 31: // Robot cuisine
+      return {
+        ...p,
+        stock: 6,
+        specs: [
+          { label: 'Capacité bol', value: '4.5 L' },
+          { label: 'Programmes', value: '12' },
+          { label: 'Balance', value: 'Intégrée' },
+        ],
+      };
+    default:
+      return p;
+  }
+}
+
+const PRODUCTS: Product[] = PRODUCTS_RAW.map((p) => withDefaults(applyCustomizations(p)));
 
 @Injectable({ providedIn: 'root' })
 export class ProductStore {
+  private http = inject(HttpClient);
+  private baseUrl = 'https://fakestoreapi.com';
+
+  private fetchApiProduct$(apiId: number): Observable<Product> {
+    return this.http.get<any>(`${this.baseUrl}/products/${apiId}`).pipe(
+      map((api) => ({
+        id: 1000 + api.id, // on garde le namespace en interne si tu veux
+        title: api.title,
+        price: api.price,
+        rating: api.rating?.rate ?? 0,
+        image: api.image,
+        category: api.category,
+        description: api.description,
+        stock: 10,
+        specs: [
+          { label: 'Origine', value: 'Importé' },
+          { label: 'Matériau', value: 'Standard' },
+        ],
+        reviews: [
+          {
+            author: 'Client API',
+            rating: 4,
+            date: '2025-10-01',
+            comment: 'Bon rapport qualité/prix.',
+          },
+        ],
+        images: [api.image, api.image, api.image],
+      }))
+    );
+  }
+
+  /** Ancienne signature (si tu l'utilises ailleurs) */
+  getOne$(id: number): Observable<Product> {
+    if (id >= 1000) return this.fetchApiProduct$(id - 1000);
+
+    const local = PRODUCTS.find((p) => p.id === id);
+    if (local) return of(local);
+
+    if (id >= 1 && id <= 20) return this.fetchApiProduct$(id); // fallback
+    return throwError(() => new Error('not-found'));
+  }
+
+  /** ✅ Nouvelle méthode: accepte un slug "fs-5" OU un id "12" */
+  getOneByKey$(key: string): Observable<Product> {
+    const m = /^fs-(\d+)$/.exec(key); // ex: fs-5 = FakeStore id 5
+    if (m) return this.fetchApiProduct$(Number(m[1]));
+
+    if (/^\d+$/.test(key)) {
+      return this.getOne$(Number(key)); // local id
+    }
+
+    return throwError(() => new Error('not-found'));
+  }
+
+  /** Fusion: ajoute un slug pour chaque produit */
+  getAllMerged$(): Observable<Product[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/products`).pipe(
+      map((apiList) =>
+        apiList.map(
+          (api) =>
+            ({
+              id: 1000 + api.id,
+              title: api.title,
+              price: api.price,
+              rating: api.rating?.rate ?? 0,
+              image: api.image,
+              category: api.category,
+              description: api.description,
+              stock: 10,
+              images: [api.image],
+              // 🔑 utile pour routerLink côté grille
+              // @ts-ignore: on tolère un champ d'affichage
+              slug: `fs-${api.id}`,
+            } as Product & { slug: string })
+        )
+      ),
+      map((apiProducts) => {
+        const localsWithSlug = PRODUCTS.map(
+          (p) => ({ ...p, slug: String(p.id) } as Product & { slug: string })
+        );
+        return [...localsWithSlug, ...apiProducts];
+      })
+    );
+  }
+
+  /** 🔹 Catégories fusionnées */
+  getCategories$() {
+    return this.getAllMerged$().pipe(map((all) => Array.from(new Set(all.map((p) => p.category)))));
+  }
+
   getAll(): Product[] {
-    return [...PRODUCTS];
+    // clone pour éviter mutations externes
+    return PRODUCTS.map((p) => ({
+      ...p,
+      specs: [...(p.specs ?? [])],
+      reviews: [...(p.reviews ?? [])],
+      images: [...(p.images ?? [])],
+    }));
   }
 
   getById(id: number): Product | undefined {
-    return PRODUCTS.find((p) => p.id === id);
+    const p = PRODUCTS.find((x) => x.id === id);
+    return p
+      ? {
+          ...p,
+          specs: [...(p.specs ?? [])],
+          reviews: [...(p.reviews ?? [])],
+          images: [...(p.images ?? [])],
+        }
+      : undefined;
   }
 
   getCategories(): string[] {

@@ -18,11 +18,11 @@
     </div>
 
     <app-product-grid
-      *ngIf="!loading && !error"
       [products]="products"
       [categories]="categories"
       [initialCategory]="selectedCategory"
-    ></app-product-grid>
+    >
+    </app-product-grid>
   </main>
 
   <app-footer></app-footer>

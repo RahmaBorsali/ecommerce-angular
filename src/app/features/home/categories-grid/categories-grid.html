@@ -5,7 +5,7 @@
     <a
       *ngFor="let c of categories"
       routerLink="/catalog"
-      [queryParams]="{ category: c.name }"  
+      [queryParams]="{ category: c.slug }"
       class="block rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:scale-[1.02] transition-transform"
     >
       <div class="relative h-56 md:h-60 overflow-hidden">

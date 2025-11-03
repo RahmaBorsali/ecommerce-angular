@@ -1,14 +1,15 @@
-// src/app/services/fakestore.service.ts
+// src/app/services/fakestore.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
-export type Product = {
+export type FakeStoreItem = {
   id: number;
   title: string;
   price: number;
   description: string;
-  category: string;
+  category: "electronics" | "jewelery" | "men's clothing" | "women's clothing";
   image: string;
   rating?: { rate: number; count: number };
 };
@@ -16,23 +17,16 @@ export type Product = {
 @Injectable({ providedIn: 'root' })
 export class FakeStore {
   private http = inject(HttpClient);
-  private readonly base = 'https://fakestoreapi.com';
-
-  getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.base}/products`)
-      .pipe(catchError(err => throwError(() => err)));
-  }
+  private base = 'https://fakestoreapi.com';
 
   getCategories(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.base}/products/categories`)
-      .pipe(catchError(err => throwError(() => err)));
-  }
-  getByCategory(cat: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.base}/products/category/${cat}`);
+    return this.http.get<string[]>(`${this.base}/products/categories`);
   }
 
-  getProduct(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.base}/products/${id}`)
-      .pipe(catchError(err => throwError(() => err)));
+  getAll(): Observable<FakeStoreItem[]> {
+    return this.http.get<FakeStoreItem[]>(`${this.base}/products`);
   }
+  getById(id: number) {
+  return this.http.get<any>(`${this.base}/products/${id}`);
+}
 }

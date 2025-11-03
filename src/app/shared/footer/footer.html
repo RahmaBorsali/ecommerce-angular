@@ -13,7 +13,7 @@
       <div>
         <h4 class="font-semibold mb-4 text-white">Navigation</h4>
         <ul class="space-y-2 text-gray-400">
-          <li><a routerLink="/products" class="hover:text-white">Catalogue</a></li>
+          <li><a [routerLink]="'/catalog'" class="hover:text-white">Catalogue</a></li>
           <li><a routerLink="/cart" class="hover:text-white">Panier</a></li>
           <li><a routerLink="/login" class="hover:text-white">Mon compte</a></li>
         </ul>
@@ -24,17 +24,35 @@
         <h4 class="font-semibold mb-4 text-white">Catégories</h4>
         <ul class="space-y-2 text-gray-400">
           <li>
-            <a [routerLink]="['/products']" [queryParams]="{ category: 'Électronique' }" class="hover:text-white">
+            <a
+              [routerLink]="['/catalog']"
+              [queryParams]="{ category: 'electronique' }"
+              routerLinkActive="text-blue-600 font-semibold"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="hover:text-white"
+            >
               Électronique
             </a>
           </li>
           <li>
-            <a [routerLink]="['/products']" [queryParams]="{ category: 'Gaming' }" class="hover:text-white">
+            <a
+              [routerLink]="['/catalog']"
+              [queryParams]="{ category: 'gaming' }"
+              routerLinkActive="text-blue-600 font-semibold"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="hover:text-white"
+            >
               Gaming
             </a>
           </li>
           <li>
-            <a [routerLink]="['/products']" [queryParams]="{ category: 'Audio' }" class="hover:text-white">
+            <a
+              [routerLink]="['/catalog']"
+              [queryParams]="{ category: 'audio' }"
+              routerLinkActive="text-blue-600 font-semibold"
+              [routerLinkActiveOptions]="{ exact: false }"
+              class="hover:text-white"
+            >
               Audio
             </a>
           </li>

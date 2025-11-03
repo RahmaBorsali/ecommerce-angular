@@ -31,7 +31,7 @@
           ></span>
         </a>
         <a
-          routerLink="/products"
+          [routerLink]="'/catalog'"
           class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
         >
           Catalogue
@@ -40,8 +40,10 @@
           ></span>
         </a>
         <a
-          [routerLink]="['/products']"
-          [queryParams]="{ category: 'Électronique' }"
+          [routerLink]="['/catalog']"
+          [queryParams]="{ category: 'electronique' }"
+          routerLinkActive="text-blue-600 font-semibold"
+          [routerLinkActiveOptions]="{ exact: false }"
           class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
         >
           Électronique
@@ -49,9 +51,12 @@
             class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
           ></span>
         </a>
+
         <a
-          [routerLink]="['/products']"
-          [queryParams]="{ category: 'Gaming' }"
+          [routerLink]="['/catalog']"
+          [queryParams]="{ category: 'gaming' }"
+          routerLinkActive="text-blue-600 font-semibold"
+          [routerLinkActiveOptions]="{ exact: false }"
           class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
         >
           Gaming
@@ -60,8 +65,10 @@
           ></span>
         </a>
         <a
-          [routerLink]="['/products']"
-          [queryParams]="{ category: 'Audio' }"
+          [routerLink]="['/catalog']"
+          [queryParams]="{ category: 'audio' }"
+          routerLinkActive="text-blue-600 font-semibold"
+          [routerLinkActiveOptions]="{ exact: false }"
           class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
         >
           Audio
@@ -142,31 +149,37 @@
         </li>
         <li>
           <a
-            routerLink="/products"
+            [routerLink]="'/catalog'"
             class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
             >Catalogue</a
           >
         </li>
         <li>
           <a
-            [routerLink]="['/products']"
-            [queryParams]="{ category: 'Électronique' }"
+            [routerLink]="['/catalog']"
+            [queryParams]="{ category: 'electronique' }"
+            routerLinkActive="text-blue-600 font-semibold"
+            [routerLinkActiveOptions]="{ exact: false }"
             class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
             >Électronique</a
           >
         </li>
         <li>
           <a
-            [routerLink]="['/products']"
-            [queryParams]="{ category: 'Gaming' }"
+            [routerLink]="['/catalog']"
+            [queryParams]="{ category: 'gaming' }"
+            routerLinkActive="text-blue-600 font-semibold"
+            [routerLinkActiveOptions]="{ exact: false }"
             class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
             >Gaming</a
           >
         </li>
         <li>
           <a
-            [routerLink]="['/products']"
-            [queryParams]="{ category: 'Audio' }"
+            [routerLink]="['/catalog']"
+            [queryParams]="{ category: 'audio' }"
+            routerLinkActive="text-blue-600 font-semibold"
+            [routerLinkActiveOptions]="{ exact: false }"
             class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
             >Audio</a
           >

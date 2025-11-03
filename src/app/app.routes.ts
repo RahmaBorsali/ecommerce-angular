@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { Routes, RouterModule } from '@angular/router';
 import { CartItems } from './features/cart-items/cart-items';
 import { Checkout} from './features/checkout/checkout'
 import { CatalogPage } from './features/catalog/catalog.page/catalog.page';
@@ -26,7 +26,7 @@ export const routes: Routes = [
   },
   {
     path: 'products/:id', component: ProductDetailPage
-  }
+  },
 
 
 
