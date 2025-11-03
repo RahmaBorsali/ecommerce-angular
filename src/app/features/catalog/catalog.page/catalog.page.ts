@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router'; // 👈 ajouté
 import { Header } from '../../../shared/header/header';
 import { Footer } from '../../../shared/footer/footer';
 import { ProductStore, Product } from '../../../services/product-store';
@@ -14,10 +14,12 @@ import { ProductGrid } from '../product-grid/product-grid';
 })
 export class CatalogPage implements OnInit {
   private store = inject(ProductStore);
+  private route = inject(ActivatedRoute);               // 👈 ajouté
 
   products: Product[] = [];
   categories: string[] = [];
-  loading = false; // ici, inutile mais on garde la structure
+  selectedCategory = '';                                // 👈 ajouté (catégorie initiale)
+  loading = false;
   error: any = null;
 
   ngOnInit(): void {
@@ -30,10 +32,12 @@ export class CatalogPage implements OnInit {
       this.error = e;
       this.loading = false;
     }
-    
+
+    // 👇 lit ?category=... et met à jour la catégorie initiale
+    this.route.queryParamMap.subscribe(p => {
+      this.selectedCategory = p.get('category') ?? '';
+    });
   }
 
-  reload() {
-    this.ngOnInit();
-  }
+  reload() { this.ngOnInit(); }
 }

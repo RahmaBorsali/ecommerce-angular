@@ -1,3 +1,4 @@
+// src/app/features/catalog/product-grid/product-grid.ts
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -16,6 +17,10 @@ export class ProductGrid implements OnChanges {
   @Input() products: Product[] = [];
   @Input() categories: string[] = [];
 
+  // 👇👇 AJOUTER CETTE LIGNE
+  @Input() initialCategory: string = '';
+
+  // état filtres/tri
   selectedCategory = '';
   priceMax = 2000;
   maxPriceCeil = 2000;
@@ -23,6 +28,7 @@ export class ProductGrid implements OnChanges {
   sortBy = '';
   searchQuery = '';
 
+  // pagination
   productsPerPage = 12;
   currentPage = 1;
 
@@ -36,9 +42,21 @@ export class ProductGrid implements OnChanges {
       const maxp = Math.max(...this.products.map(p => p.price || 0), 0);
       this.maxPriceCeil = Math.ceil(maxp || 2000);
       this.priceMax = this.maxPriceCeil;
-      this.applyAll();
     }
+
+    // 👇👇 Appliquer la catégorie initiale quand elle arrive du parent
+    if (changes['initialCategory']) {
+      this.selectedCategory = this.initialCategory || '';
+    }
+
+    this.applyAll();
   }
+
+
+
+
+
+
 
   applyAll() {
     this.filtered = this.computeFiltered();
