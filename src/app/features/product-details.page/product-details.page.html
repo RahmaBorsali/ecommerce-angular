@@ -97,23 +97,87 @@
             </div>
           </section>
 
-          <!-- Avis clients -->
-          <section *ngIf="reviews?.length" class="mt-6">
-            <h3 class="text-xl font-semibold mb-3">Avis clients</h3>
-            <div class="space-y-4">
-              <article *ngFor="let r of reviews; trackBy: trackByReview" class="rounded-xl border bg-white p-4">
-                <div class="flex items-center justify-between">
-                  <div class="font-semibold">{{ r.author }}</div>
-                  <div class="text-xs text-gray-500">{{ r.date | date:'mediumDate' }}</div>
-                </div>
-                <div class="text-amber-500 my-1">
-                  <span *ngFor="let s of starLine(r.rating)">{{ s ? '★' : '☆' }}</span>
-                  <span class="text-gray-500 text-xs ml-1">({{ r.rating | number:'1.1-1' }})</span>
-                </div>
-                <p class="text-gray-700">{{ r.comment }}</p>
-              </article>
-            </div>
-          </section>
+          <!-- Avis clients (liste + formulaire) -->
+<section class="mt-10">
+  <h3 class="text-xl font-semibold mb-3">Avis clients</h3>
+
+  <!-- Liste des avis -->
+  <div *ngIf="reviews?.length; else noReviews" class="space-y-4">
+    <article *ngFor="let r of reviews; trackBy: trackByReview" class="rounded-xl border bg-white p-4">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">{{ r.author }}</div>
+        <div class="text-xs text-gray-500">{{ r.date | date:'medium' }}</div>
+      </div>
+      <div class="text-amber-500 my-1">
+        <span *ngFor="let s of starLine(r.rating)">{{ s ? '★' : '☆' }}</span>
+        <span class="text-gray-500 text-xs ml-1">({{ r.rating | number:'1.1-1' }})</span>
+      </div>
+      <p class="text-gray-700 whitespace-pre-line">{{ r.comment }}</p>
+    </article>
+  </div>
+
+  <ng-template #noReviews>
+    <div class="p-6 rounded-xl border bg-white text-gray-600">
+      Aucun avis pour le moment. Soyez le premier à donner votre avis !
+    </div>
+  </ng-template>
+
+  <!-- Formulaire : laisser un avis -->
+  <div class="mt-8 rounded-2xl border bg-white p-4 sm:p-6">
+    <h4 class="text-lg font-semibold mb-3">Laisser un avis</h4>
+
+    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="space-y-4">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Votre nom</label>
+          <input class="w-full border rounded-lg px-3 py-2" formControlName="author" placeholder="ex: Ali" />
+          <small class="text-red-600" *ngIf="rf.author.touched && rf.author.invalid">
+            Nom requis (min 2 caractères)
+          </small>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Note</label>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              *ngFor="let s of [1,2,3,4,5]"
+              (click)="setRating(s)"
+              class="text-2xl transition"
+              [class.text-amber-500]="s <= rating"
+              [class.text-gray-300]="s > rating"
+              aria-label="noter"
+            >★</button>
+          </div>
+          <small class="text-red-600" *ngIf="rf.rating.touched && rf.rating.invalid">
+            Note requise (1 à 5)
+          </small>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Commentaire</label>
+        <textarea rows="4" class="w-full border rounded-lg px-3 py-2" formControlName="comment"
+                  placeholder="Partagez votre expérience..."></textarea>
+        <small class="text-red-600" *ngIf="rf.comment.touched && rf.comment.invalid">
+          Commentaire requis (min 5 caractères)
+        </small>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+          [disabled]="reviewForm.invalid || submittingReview"
+        >
+          {{ submittingReview ? 'Envoi…' : 'Publier l’avis' }}
+        </button>
+        <span class="text-sm text-green-700" *ngIf="reviewMsg">{{ reviewMsg }}</span>
+      </div>
+    </form>
+  </div>
+</section>
+
+
         </div>
       </div>
     </ng-container>

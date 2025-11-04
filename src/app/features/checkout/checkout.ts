@@ -15,7 +15,6 @@ import { cardNumber } from '../../utils/card-number';
   templateUrl: './checkout.html',
 })
 export class Checkout implements OnInit, OnDestroy {
-  // 👇👇 CES TROIS LIGNES SUPPRIMENT TES ERREURS "Property 'router'/'cartSvc' does not exist"
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly cartSvc = inject(CartService);
@@ -100,37 +99,76 @@ export class Checkout implements OnInit, OnDestroy {
     this.step = 1;
   }
 
-  async pay() {
-    if (this.step2.invalid) {
-      this.step2.markAllAsTouched();
-      Swal.fire({
-        icon: 'warning',
-        title: 'Informations de carte invalides',
-        text: 'Merci de vérifier vos informations bancaires.',
-      });
-      return;
-    }
+async pay() {
+  if (this.step2.invalid) {
+    this.step2.markAllAsTouched();
+    Swal.fire({
+      icon: 'warning',
+      title: 'Informations de carte invalides',
+      text: 'Merci de vérifier vos informations bancaires.',
+    });
+    return;
+  }
+
   this.loading = true;
-  await Swal.fire({
-    title: 'Paiement en cours...',
+
+  // OUVRIR la modale de chargement SANS await
+  Swal.fire({
+    title: 'Paiement en cours…',
     allowOutsideClick: false,
-    didOpen: () => Swal.showLoading()
+    didOpen: () => Swal.showLoading(),
+    showConfirmButton: false,
+    backdrop: true,
   });
 
-    setTimeout(() => {
-      Swal.close();
-      Swal.fire({
-        icon: 'success',
-        title: 'Commande confirmée ✅',
-        text: 'Merci pour votre achat !',
-      });
+  // Simule l’appel PSP (Stripe, etc.)
+  setTimeout(() => {
+    // 1) fermer la modale "chargement"
+    Swal.close();
 
-      this.cartSvc.clearCart();
-      this.cartSvc.setMeta({ couponCode: '' });
+    // 2) créer une commande "réelle" dans localStorage
+    try {
+      const LS_ORDERS = 'app.orders';
+      const orders = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
 
-      this.router.navigate(['/']);
-    }, 1500);
-  }
+      const number = 'ES-' + new Date().toISOString().slice(0,10).replace(/-/g, '') + '-' + String(Math.floor(Math.random()*10000)).padStart(4,'0');
+
+      const order = {
+        id: crypto.randomUUID(),
+        number,
+        date: new Date().toISOString(),
+        total: this.total,
+        status: 'processing', // ou 'paid' si tu veux un statut dédié
+        items: this.cart.map(it => ({
+          title: it.name,
+          qty: it.quantity,
+          price: it.price,
+          image: it.image
+        }))
+      };
+
+      orders.unshift(order);
+      localStorage.setItem(LS_ORDERS, JSON.stringify(orders));
+    } catch { /* ignore */ }
+
+    // 3) vider le panier + coupon
+    this.cartSvc.clearCart();
+    this.cartSvc.setMeta({ couponCode: '' });
+
+    // 4) succès
+    Swal.fire({
+      icon: 'success',
+      title: 'Commande confirmée ✅',
+      text: 'Merci pour votre achat !',
+    });
+
+    // 5) redirection (accueil ou historique commandes)
+    this.router.navigate(['/account/orders']); // ou ['/']
+
+    this.loading = false;
+  }, 1500);
+}
+
 
   onImgError(ev: Event, item: CartItem) {
     const el = ev.target as HTMLImageElement;

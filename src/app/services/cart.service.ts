@@ -21,7 +21,7 @@ export class CartService {
 
   private readonly defaultMeta: CartMeta = {
     shippingFee: 8,
-    freeShippingThreshold: 10000,
+    freeShippingThreshold: 8000,
     couponCode: '',
   };
 

@@ -22,7 +22,7 @@ export class CategoriesGrid {
     {
       name: 'Vêtements Homme',
       slug: "men's clothing",
-      image: 'https://images.unsplash.com/photo-1521334884684-d80222895322?w=800',
+      image: '../../../../../assets/homme.jpg',
       icon: 'shirt',
     },
     {
@@ -34,25 +34,25 @@ export class CategoriesGrid {
     {
       name: 'Bijoux',
       slug: 'jewelery',
-      image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=800',
+      image: '../../../../../assets/bijous.jpg',
       icon: 'gem',
     },
     {
       name: 'Maison',
       slug: 'maison',
       image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800',
-      icon: 'home',
+      icon: 'house',
     },
     {
       name: 'Beauté & Soins',
       slug: 'beaute',
-      image: 'https://images.unsplash.com/photo-1600180758890-6a3b4b3a5a2f?w=800',
+      image: '../../../../../assets/beaute.avif',
       icon: 'sparkles',
     },
   ];
 
     iconClass(name: string) { return `icon-${name}`; }
-  
+
 
 
 }
