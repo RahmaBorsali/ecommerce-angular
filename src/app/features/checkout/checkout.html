@@ -124,85 +124,210 @@
         </form>
 
         <!-- Étape 2 -->
-        <form *ngIf="step === 2" [formGroup]="step2" (ngSubmit)="pay()">
-          <h2 class="text-xl font-bold mb-4">Paiement</h2>
+        <div *ngIf="step === 2" class="mt-6">
+          <h3 class="text-lg font-semibold mb-3">Choix du moyen de paiement</h3>
 
-          <div class="mb-4">
-            <label class="text-sm font-medium mb-1 block">Numéro de Carte *</label>
-            <input
-              class="w-full px-3 py-2 border rounded-lg"
-              placeholder="1234 5678 9012 3456"
-              maxlength="16"
-              formControlName="cardNumber"
-            />
-            <p
-              class="text-red-600 text-xs mt-1"
-              *ngIf="step2.controls.cardNumber.touched && step2.controls.cardNumber.invalid"
-            >
-              Numéro de carte invalide
-            </p>
-          </div>
-
-          <div class="mb-4">
-            <label class="text-sm font-medium mb-1 block">Nom sur la Carte *</label>
-            <input class="w-full px-3 py-2 border rounded-lg" formControlName="cardName" />
-            <p
-              class="text-red-600 text-xs mt-1"
-              *ngIf="step2.controls.cardName.touched && step2.controls.cardName.invalid"
-            >
-              Nom requis
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label class="text-sm font-medium mb-1 block">Date d'Expiration *</label>
-              <input
-                class="w-full px-3 py-2 border rounded-lg"
-                placeholder="MM/AA"
-                formControlName="expiryDate"
-              />
-              <p
-                class="text-red-600 text-xs mt-1"
-                *ngIf="step2.controls.expiryDate.touched && step2.controls.expiryDate.invalid"
-              >
-                Date invalide (MM/AA)
-              </p>
-            </div>
-            <div>
-              <label class="text-sm font-medium mb-1 block">CVV *</label>
-              <input
-                class="w-full px-3 py-2 border rounded-lg"
-                maxlength="3"
-                placeholder="123"
-                formControlName="cvv"
-              />
-              <p
-                class="text-red-600 text-xs mt-1"
-                *ngIf="step2.controls.cvv.touched && step2.controls.cvv.invalid"
-              >
-                CVV invalide
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-4">
+          <!-- Tuiles de sélection -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <button
               type="button"
-              (click)="backToStep1()"
-              class="px-6 py-2 border rounded-lg hover:bg-gray-50"
+              (click)="selectMethod('card')"
+              [class.border-blue-600]="method === 'card'"
+              class="w-full p-4 rounded-xl border bg-white shadow-sm hover:shadow-md text-left transition"
             >
-              Retour
+              <div class="flex items-center gap-3">
+                <i class="icon-credit-card text-2xl text-blue-600"></i>
+                <div>
+                  <div class="font-semibold">Carte bancaire</div>
+                  <div class="text-xs text-gray-500">Visa / MasterCard</div>
+                </div>
+              </div>
             </button>
+
             <button
-              type="submit"
-              [disabled]="loading"
-              class="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3 rounded-lg font-semibold"
+              type="button"
+              (click)="selectMethod('paypal')"
+              [class.border-blue-600]="method === 'paypal'"
+              class="w-full p-4 rounded-xl border bg-white shadow-sm hover:shadow-md text-left transition"
             >
-              {{ loading ? 'Traitement...' : 'Payer ' + (total | number : '1.2-2') + ' DT' }}
+              <div class="flex items-center gap-3">
+                <i class="icon-paypal text-2xl text-blue-700"></i>
+                <div>
+                  <div class="font-semibold">PayPal</div>
+                  <div class="text-xs text-gray-500">Payer avec PayPal</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectMethod('applepay')"
+              [class.border-blue-600]="method === 'applepay'"
+              class="w-full p-4 rounded-xl border bg-white shadow-sm hover:shadow-md text-left transition"
+            >
+              <div class="flex items-center gap-3">
+                <i class="icon-apple text-2xl"></i>
+                <div>
+                  <div class="font-semibold">Apple Pay</div>
+                  <div class="text-xs text-gray-500">Paiement rapide</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              (click)="selectMethod('googlepay')"
+              [class.border-blue-600]="method === 'googlepay'"
+              class="w-full p-4 rounded-xl border bg-white shadow-sm hover:shadow-md text-left transition"
+            >
+              <div class="flex items-center gap-3">
+                <i class="icon-credit-card text-2xl"></i>
+                <div>
+                  <div class="font-semibold">Google Pay</div>
+                  <div class="text-xs text-gray-500">Paiement rapide</div>
+                </div>
+              </div>
             </button>
           </div>
-        </form>
+
+          <!-- Panneau/formulaire selon la méthode -->
+          <div class="rounded-2xl border bg-white p-5 sm:p-6 shadow-sm">
+            <!-- Carte bancaire -->
+            <form
+              *ngIf="method === 'card'"
+              [formGroup]="step2"
+              (ngSubmit)="pay()"
+              class="space-y-4"
+            >
+              <div>
+                <label class="block text-sm mb-1">Numéro de carte</label>
+                <input
+                  formControlName="cardNumber"
+                  type="text"
+                  placeholder="4242 4242 4242 4242"
+                  class="w-full border rounded-lg px-3 py-2"
+                  (input)="formatCardNumber($event)"
+                />
+                <small
+                  class="text-red-600"
+                  *ngIf="step2.controls.cardNumber.touched && step2.controls.cardNumber.invalid"
+                >
+                  Numéro invalide.
+                </small>
+              </div>
+
+              <div class="grid sm:grid-cols-3 gap-4">
+                <div class="sm:col-span-2">
+                  <label class="block text-sm mb-1">Nom sur la carte</label>
+                  <input formControlName="cardName" class="w-full border rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1">CVV</label>
+                  <input
+                    formControlName="cvv"
+                    maxlength="4"
+                    class="w-full border rounded-lg px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm mb-1">Date d'expiration (MM/AA)</label>
+                <input
+                  formControlName="expiryDate"
+                  placeholder="MM/AA"
+                  class="w-full border rounded-lg px-3 py-2"
+                />
+              </div>
+
+              <div class="pt-2 flex gap-3">
+                <button type="button" (click)="backToStep1()" class="px-4 py-2 rounded-lg border">
+                  Retour
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-2 rounded-lg bg-blue-600 text-white"
+                  [disabled]="loading"
+                >
+                  {{ loading ? 'Paiement…' : 'Payer avec la carte' }}
+                </button>
+              </div>
+            </form>
+
+            <!-- PayPal -->
+            <form
+              *ngIf="method === 'paypal'"
+              [formGroup]="paypalForm"
+              (ngSubmit)="pay()"
+              class="space-y-4"
+            >
+              <div>
+                <label class="block text-sm mb-1">Email PayPal</label>
+                <input
+                  formControlName="email"
+                  type="email"
+                  placeholder="vous@exemple.com"
+                  class="w-full border rounded-lg px-3 py-2"
+                />
+                <small
+                  class="text-red-600"
+                  *ngIf="paypalForm.controls.email.touched && paypalForm.controls.email.invalid"
+                >
+                  Email requis et valide.
+                </small>
+              </div>
+              <div class="pt-2 flex gap-3">
+                <button type="button" (click)="backToStep1()" class="px-4 py-2 rounded-lg border">
+                  Retour
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-2 rounded-lg bg-blue-600 text-white"
+                  [disabled]="loading"
+                >
+                  {{ loading ? 'Traitement…' : 'Payer avec PayPal' }}
+                </button>
+              </div>
+            </form>
+
+            <!-- Apple Pay / Google Pay -->
+            <form
+              *ngIf="method === 'applepay' || method === 'googlepay'"
+              [formGroup]="walletForm"
+              (ngSubmit)="pay()"
+              class="space-y-4"
+            >
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm mb-1">Nom complet</label>
+                  <input formControlName="fullName" class="w-full border rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1">Téléphone</label>
+                  <input formControlName="phone" class="w-full border rounded-lg px-3 py-2" />
+                </div>
+              </div>
+              <div class="pt-2 flex gap-3">
+                <button type="button" (click)="backToStep1()" class="px-4 py-2 rounded-lg border">
+                  Retour
+                </button>
+                <button
+                  type="submit"
+                  class="px-6 py-2 rounded-lg bg-blue-600 text-white"
+                  [disabled]="loading"
+                >
+                  {{
+                    loading
+                      ? 'Traitement…'
+                      : method === 'applepay'
+                      ? 'Payer avec Apple Pay'
+                      : 'Payer avec Google Pay'
+                  }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
 

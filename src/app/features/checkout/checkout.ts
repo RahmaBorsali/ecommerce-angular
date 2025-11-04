@@ -7,6 +7,7 @@ import { CartService, CartItem, CartMeta } from '../../services/cart.service';
 import { Footer } from '../../shared/footer/footer';
 import { Header } from '../../shared/header/header';
 import { cardNumber } from '../../utils/card-number';
+import { AuthService } from '../../services/auth.service'; // + import
 
 @Component({
   selector: 'app-checkout',
@@ -15,6 +16,8 @@ import { cardNumber } from '../../utils/card-number';
   templateUrl: './checkout.html',
 })
 export class Checkout implements OnInit, OnDestroy {
+  private readonly auth = inject(AuthService); // 👈
+
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly cartSvc = inject(CartService);
@@ -24,6 +27,7 @@ export class Checkout implements OnInit, OnDestroy {
 
   cart: CartItem[] = [];
   meta: CartMeta = this.cartSvc.getMeta();
+  method: 'card' | 'paypal' | 'applepay' | 'googlepay' = 'card';
 
   // Étape 1
   step1 = this.fb.nonNullable.group({
@@ -41,13 +45,20 @@ export class Checkout implements OnInit, OnDestroy {
     cardNumber: ['', [Validators.required, cardNumber]],
     cardName: ['', Validators.required],
     expiryDate: ['', [Validators.required, Validators.pattern(/^\d{2}\/\d{2}$/)]], // MM/AA
-    cvv: ['', [Validators.required, Validators.pattern(/^\d{3}$/)]],
+    cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
   });
 
   private onCartUpdated = () => {
     this.cart = this.cartSvc.getCart();
     this.meta = this.cartSvc.getMeta(); // récupère le coupon aussi
   };
+  formatCardNumber(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const raw = (input.value || '').replace(/\D+/g, '').slice(0, 19);
+    input.value = raw.replace(/(.{4})/g, '$1 ').trim();
+    // mettre à jour le formcontrol sans déclencher validation redondante
+    this.step2.controls.cardNumber.setValue(input.value, { emitEvent: false });
+  }
 
   ngOnInit(): void {
     this.cart = this.cartSvc.getCart();
@@ -99,7 +110,27 @@ export class Checkout implements OnInit, OnDestroy {
     this.step = 1;
   }
 
-async pay() {
+  // +++ sous step2 +++
+  paypalForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+
+  walletForm = this.fb.nonNullable.group({
+    fullName: ['', [Validators.required, Validators.minLength(2)]],
+    phone: ['', [Validators.required]],
+  });
+
+  selectMethod(m: 'card' | 'paypal' | 'applepay' | 'googlepay') {
+    this.method = m;
+  }
+
+  // Optionnel: réinitialiser les formulaires quand on change de méthode
+  // (décommente si tu veux un reset à chaque switch)
+  // if (m === 'card') { this.paypalForm.reset(); this.walletForm.reset(); }
+  // if (m === 'paypal') { this.step2.reset(); this.walletForm.reset(); }
+  // if (m === 'applepay' || m === 'googlepay') { this.step2.reset(); this.paypalForm.reset(); }
+
+  async pay() {
   if (this.step2.invalid) {
     this.step2.markAllAsTouched();
     Swal.fire({
@@ -112,7 +143,6 @@ async pay() {
 
   this.loading = true;
 
-  // OUVRIR la modale de chargement SANS await
   Swal.fire({
     title: 'Paiement en cours…',
     allowOutsideClick: false,
@@ -121,54 +151,67 @@ async pay() {
     backdrop: true,
   });
 
-  // Simule l’appel PSP (Stripe, etc.)
   setTimeout(() => {
-    // 1) fermer la modale "chargement"
     Swal.close();
 
-    // 2) créer une commande "réelle" dans localStorage
     try {
       const LS_ORDERS = 'app.orders';
       const orders = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
 
-      const number = 'ES-' + new Date().toISOString().slice(0,10).replace(/-/g, '') + '-' + String(Math.floor(Math.random()*10000)).padStart(4,'0');
+      const number =
+        'ES-' +
+        new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+        '-' +
+        String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
       const order = {
         id: crypto.randomUUID(),
         number,
         date: new Date().toISOString(),
         total: this.total,
-        status: 'processing', // ou 'paid' si tu veux un statut dédié
-        items: this.cart.map(it => ({
+        status: 'processing',
+        userId: this.auth?.currentUser()?.id ?? null,
+        items: this.cart.map((it) => ({
           title: it.name,
           qty: it.quantity,
           price: it.price,
-          image: it.image
-        }))
+          image: it.image,
+        })),
       };
 
       orders.unshift(order);
       localStorage.setItem(LS_ORDERS, JSON.stringify(orders));
-    } catch { /* ignore */ }
+    } catch {}
 
-    // 3) vider le panier + coupon
     this.cartSvc.clearCart();
     this.cartSvc.setMeta({ couponCode: '' });
 
-    // 4) succès
     Swal.fire({
       icon: 'success',
       title: 'Commande confirmée ✅',
       text: 'Merci pour votre achat !',
     });
 
-    // 5) redirection (accueil ou historique commandes)
-    this.router.navigate(['/account/orders']); // ou ['/']
+    // 🟩 ➜ ajoute ce bloc ICI (à la fin de pay())
+    const orderNumber =
+      'ES-' +
+      new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+      '-' +
+      String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+
+    const eta = new Date();
+    eta.setDate(eta.getDate() + 7);
+
+    this.router.navigate(['/order/success'], {
+      state: {
+        orderNumber,
+        estimatedDelivery: eta.toISOString(),
+      },
+    });
 
     this.loading = false;
   }, 1500);
 }
-
 
   onImgError(ev: Event, item: CartItem) {
     const el = ev.target as HTMLImageElement;

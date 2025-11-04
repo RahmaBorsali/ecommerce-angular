@@ -63,6 +63,7 @@ export const routes: Routes = [
     ],
   },
     { path: 'search', component: SearchResults },
+{ path: 'order/success', loadComponent: () => import('./features/order-success/order-success').then(m => m.OrderSuccess) },
 
 
 

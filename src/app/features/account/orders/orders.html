@@ -3,86 +3,75 @@
     <h2 class="text-xl font-semibold">Historique des commandes</h2>
 
     <div class="flex gap-2">
-      <button
-        class="px-3 py-1.5 rounded-lg border"
-        [class.bg-blue-600]="filter() === 'all'"
-        [class.text-white]="filter() === 'all'"
-        (click)="filter.set('all')"
-      >
-        Toutes
-      </button>
+      <button class="px-3 py-1.5 rounded-lg border"
+              [class.bg-blue-600]="filter()==='all'"
+              [class.text-white]="filter()==='all'"
+              (click)="filter.set('all')">Toutes</button>
 
-      <button
-        class="px-3 py-1.5 rounded-lg border"
-        [class.bg-amber-600]="filter() === 'processing'"
-        [class.text-white]="filter() === 'processing'"
-        (click)="filter.set('processing')"
-      >
-        En traitement
-      </button>
+      <button class="px-3 py-1.5 rounded-lg border"
+              [class.bg-amber-600]="filter()==='processing'"
+              [class.text-white]="filter()==='processing'"
+              (click)="filter.set('processing')">En traitement</button>
 
-      <button
-        class="px-3 py-1.5 rounded-lg border"
-        [class.bg-blue-600]="filter() === 'shipped'"
-        [class.text-white]="filter() === 'shipped'"
-        (click)="filter.set('shipped')"
-      >
-        Expédiées
-      </button>
+      <button class="px-3 py-1.5 rounded-lg border"
+              [class.bg-blue-600]="filter()==='shipped'"
+              [class.text-white]="filter()==='shipped'"
+              (click)="filter.set('shipped')">Expédiées</button>
 
-      <button
-        class="px-3 py-1.5 rounded-lg border"
-        [class.bg-emerald-600]="filter() === 'delivered'"
-        [class.text-white]="filter() === 'delivered'"
-        (click)="filter.set('delivered')"
-      >
-        Livrées
-      </button>
+      <button class="px-3 py-1.5 rounded-lg border"
+              [class.bg-emerald-600]="filter()==='delivered'"
+              [class.text-white]="filter()==='delivered'"
+              (click)="filter.set('delivered')">Livrées</button>
 
-      <button
-        class="px-3 py-1.5 rounded-lg border"
-        [class.bg-rose-600]="filter() === 'cancelled'"
-        [class.text-white]="filter() === 'cancelled'"
-        (click)="filter.set('cancelled')"
-      >
-        Annulées
-      </button>
+      <button class="px-3 py-1.5 rounded-lg border"
+              [class.bg-rose-600]="filter()==='cancelled'"
+              [class.text-white]="filter()==='cancelled'"
+              (click)="filter.set('cancelled')">Annulées</button>
     </div>
   </div>
 
-  <div *ngIf="displayed().length === 0" class="text-center p-10 rounded-xl border bg-white">
+  <div *ngIf="displayed().length===0" class="text-center p-10 rounded-xl border bg-white">
     <div class="text-5xl mb-2">📦</div>
     <p class="font-medium">Aucune commande pour ce filtre.</p>
     <p class="text-gray-500">Commencez par découvrir notre catalogue.</p>
-    <a
-      [routerLink]="'/catalog'"
-      class="inline-block mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white"
-    >
-      Aller au catalogue
-    </a>
+    <a [routerLink]="'/catalog'"
+       class="inline-block mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white">Aller au catalogue</a>
   </div>
 
   <div class="space-y-4">
-    <div
-      *ngFor="let o of displayed()"
-      class="rounded-xl border bg-white p-4 md:p-6 hover:shadow-lg transition"
-    >
+    <!-- ✅ un seul *ngFor -->
+    <div *ngFor="let o of displayed()" class="rounded-xl border bg-white p-4 md:p-6 hover:shadow-lg transition">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="font-semibold">Commande {{ o.number }}</div>
-        <span class="text-sm rounded-full px-3 py-1.5" [ngClass]="badgeClass(o.status)">
-          {{ o.status | titlecase }}
-        </span>
+
+        <div class="flex items-center gap-3">
+          <span class="text-sm rounded-full px-3 py-1.5" [ngClass]="badgeClass(o.status)">
+            {{ o.status | titlecase }}
+          </span>
+
+          <!-- 🗑️ Annuler (caché si déjà livrée/annulée) -->
+          <button *ngIf="o.status !== 'cancelled' && o.status !== 'delivered'"
+                  (click)="confirmCancel(o)"
+                  class="p-2 rounded-lg border hover:bg-rose-50 hover:border-rose-300 text-rose-600"
+                  title="Annuler cette commande">
+            <i class="icon-trash"></i>
+          </button>
+        </div>
       </div>
+
       <div class="text-sm text-gray-500 mt-1">
-        Passée le {{ o.date | date : 'mediumDate' }} • Total
-        {{ o.total | currency : 'EUR' : 'symbol' : '1.2-2' }}
+        Passée le {{ o.date | date:'mediumDate' }} • Total {{ o.total | number:'1.2-2' }} DT
+        <ng-container *ngIf="o.payment">
+          • Paiement: {{ o.payment?.method | titlecase }}
+          <ng-container *ngIf="o.payment?.last4"> (**** {{ o.payment?.last4 }})</ng-container>
+        </ng-container>
       </div>
 
       <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div *ngFor="let it of o.items" class="rounded-lg border p-3 bg-gray-50">
           <div class="font-medium truncate">{{ it.title }}</div>
           <div class="text-sm text-gray-600">Qté: {{ it.qty }}</div>
-          <div class="text-sm">{{ it.price | currency : 'EUR' }}</div>
+          <div class="text-sm">{{ it.price | number:'1.2-2' }} DT</div>
         </div>
       </div>
     </div>

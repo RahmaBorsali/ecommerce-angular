@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-
+import { Injectable, inject } from '@angular/core';
+import { AuthService } from './auth.service';
 export type CartItem = {
   id: number;
   name: string;
@@ -13,9 +13,13 @@ export type CartMeta = {
   freeShippingThreshold: number; // ex: 10000
   couponCode?: string; // 'SALE10' | 'FREESHIP' | ''
 };
-
+const CART_PREFIX = 'app.cart.';
+const META_PREFIX = 'app.cartmeta.';
+const GUEST_KEY  = 'app.guestId';
 @Injectable({ providedIn: 'root' })
 export class CartService {
+    private auth = inject(AuthService);
+
   private readonly cartKey = 'cart';
   private readonly metaKey = 'cart_meta';
 
@@ -24,7 +28,31 @@ export class CartService {
     freeShippingThreshold: 8000,
     couponCode: '',
   };
+private uid(): string {
+    const u = this.auth.currentUser();
+    if (u?.id) return String(u.id);
+    // invité : id par session (onglet)
+    let gid = sessionStorage.getItem(GUEST_KEY);
+    if (!gid) {
+      gid = crypto.randomUUID();
+      sessionStorage.setItem(GUEST_KEY, gid);
+    }
+    return `guest-${gid}`;
+  }
 
+
+
+  // -------- Storage helpers ----------
+  private read<T>(key: string, fallback: T): T {
+    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
+    catch { return fallback; }
+  }
+  private write<T>(key: string, val: T) {
+    localStorage.setItem(key, JSON.stringify(val));
+  }
+  private emit() {
+    window.dispatchEvent(new Event('cartUpdated'));
+  }
   // ---------- CART ----------
   getCart(): CartItem[] {
     const raw = localStorage.getItem(this.cartKey);
