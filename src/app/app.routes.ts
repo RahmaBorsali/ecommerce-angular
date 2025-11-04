@@ -5,6 +5,8 @@ import { CatalogPage } from './features/catalog/catalog.page/catalog.page';
 import { ProductDetailPage } from './features/product-details.page/product-details.page' ;
 import { Profile } from './features/account/profile/profile';
 import {authGuard} from './guards/auth.guard'
+import { SearchResults } from './features/search-results/search-results';
+
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {
@@ -29,7 +31,7 @@ export const routes: Routes = [
   {
     path: 'products/:id', component: ProductDetailPage
   },
-  
+
   {
     path: 'account',
     canActivate: [authGuard], // protège toutes les sous-pages
@@ -60,6 +62,8 @@ export const routes: Routes = [
       },
     ],
   },
+    { path: 'search', component: SearchResults },
+
 
 
 

@@ -52,6 +52,7 @@ export class CategoriesGrid {
   ];
 
     iconClass(name: string) { return `icon-${name}`; }
+  
 
 
 }

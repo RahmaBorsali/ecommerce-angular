@@ -102,17 +102,15 @@ export class Header implements OnInit, OnDestroy {
   closeSearch() {
     this.isSearchOpen = false;
   }
+handleSearch(ev?: Event) {
+  ev?.preventDefault();
+  const q = (this.searchQuery || '').trim();
+  if (!q) return;
+  this.router.navigate(['/search'], { queryParams: { q } });
+  this.closeSearch();
+}
 
-  handleSearch(ev?: Event) {
-    ev?.preventDefault();
-    const q = (this.searchQuery || '').trim();
-    this.router.navigate(['/products'], {
-      queryParams: q ? { q } : {},
-      queryParamsHandling: '',
-    });
-    // option: garder ouvert pour modifier; sinon refermer:
-    this.closeSearch();
-  }
+
 
   // Raccourci clavier "/" pour ouvrir et focus
   @HostListener('document:keydown', ['$event'])
