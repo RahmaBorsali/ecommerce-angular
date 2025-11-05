@@ -20,8 +20,14 @@ const GUEST_KEY  = 'app.guestId';
 export class CartService {
     private auth = inject(AuthService);
 
-  private readonly cartKey = 'cart';
-  private readonly metaKey = 'cart_meta';
+private get cartKey(): string {
+  return `${CART_PREFIX}${this.uid()}`;
+}
+
+private get metaKey(): string {
+  return `${META_PREFIX}${this.uid()}`;
+}
+  
 
   private readonly defaultMeta: CartMeta = {
     shippingFee: 8,
@@ -29,16 +35,17 @@ export class CartService {
     couponCode: '',
   };
 private uid(): string {
-    const u = this.auth.currentUser();
-    if (u?.id) return String(u.id);
-    // invité : id par session (onglet)
-    let gid = sessionStorage.getItem(GUEST_KEY);
-    if (!gid) {
-      gid = crypto.randomUUID();
-      sessionStorage.setItem(GUEST_KEY, gid);
-    }
-    return `guest-${gid}`;
+  const u = this.auth.currentUser();
+  if (u?.id) return String(u.id);
+  // invité : id par session (onglet)
+  let gid = sessionStorage.getItem(GUEST_KEY);
+  if (!gid) {
+    gid = crypto.randomUUID();
+    sessionStorage.setItem(GUEST_KEY, gid);
   }
+  return `guest-${gid}`;
+}
+
 
 
 

@@ -12,7 +12,8 @@ export type User = {
 
 const LS_USERS   = 'app.users';
 const LS_SESSION = 'app.session';
-
+const CART_PREFIX = 'app.cart.';
+const META_PREFIX = 'app.cartmeta.'
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   // --------- Public API ----------
@@ -38,10 +39,25 @@ export class AuthService {
     if (u.password !== btoa(password)) throw new Error('BAD_CREDENTIALS');
     localStorage.setItem(LS_SESSION, JSON.stringify({ userId: u.id }));
     return u;
+    window.dispatchEvent(new Event('authChanged'));
+
   }
 
   logout() {
+    const session = this.readSession();
+    if (session?.userId) {
+      // 🧹 Efface le panier du user
+      localStorage.removeItem(`${CART_PREFIX}${session.userId}`);
+      localStorage.removeItem(`${META_PREFIX}${session.userId}`);
+    }
+
+    // 📴 Efface la session
     localStorage.removeItem(LS_SESSION);
+
+    // Optionnel : notifier le reste de l’app
+    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event('authChanged'));
+
   }
 
   currentUser(): User | null {

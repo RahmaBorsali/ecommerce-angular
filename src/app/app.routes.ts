@@ -53,7 +53,7 @@ export const routes: Routes = [
       {
         path: 'wishlist',
         loadComponent: () =>
-          import('./features/account/wishlist/wishlist').then(m => m.AccountWishlist),
+          import('./features/account/account-wishlist/account-wishlist').then(m => m.AccountWishlist),
       },
       {
         path: 'addresses',

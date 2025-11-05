@@ -1,0 +1,37 @@
+<div class="p-6 lg:p-8">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Mes Favoris</h2>
+    <button (click)="clearAll()" *ngIf="items().length"
+            class="px-3 py-1.5 rounded-lg border text-white bg-rose-600 hover:bg-rose-700 border-rose-700">
+      Tout effacer
+    </button>
+  </div>
+
+  <div *ngIf="items().length===0" class="text-center p-10 rounded-xl border bg-white">
+    <div class="text-5xl mb-2">💙</div>
+    <p class="font-medium">Aucun favori pour l’instant.</p>
+    <a routerLink="/catalog" class="inline-block mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white">
+      Parcourir le catalogue
+    </a>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div *ngFor="let it of items()" class="rounded-xl border bg-white overflow-hidden hover:shadow-md transition">
+      <a [routerLink]="['/products', it.id]" class="block">
+        <img [src]="it.image" [alt]="it.title" class="h-40 w-full object-cover" />
+      </a>
+      <div class="p-4">
+        <a [routerLink]="['/products', it.id]" class="font-semibold line-clamp-2 hover:underline">
+          {{ it.title }}
+        </a>
+        <div class="mt-1 text-blue-600 font-bold">{{ it.price | number:'1.2-2' }} DT</div>
+        <div class="mt-3 flex gap-2">
+          <a [routerLink]="['/products', it.id]" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white">Voir</a>
+          <button (click)="remove(it)" class="px-3 py-1.5 rounded-lg border text-rose-600 border-rose-300 hover:bg-rose-50">
+            Retirer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

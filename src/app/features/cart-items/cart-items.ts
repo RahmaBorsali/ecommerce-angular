@@ -1,12 +1,13 @@
 // src/app/features/cart/cart-items.component.ts
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink,Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { CartService, CartItem, CartMeta } from '../../services/cart.service';
 import { Header } from '../../shared/header/header';
 import { Footer } from '../../shared/footer/footer';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-cart-items',
@@ -15,6 +16,9 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './cart-items.html',
 })
 export class CartItems implements OnInit, OnDestroy {
+  private auth = inject(AuthService);
+private router = inject(Router);
+
   Math = Math; // pour l’utilisation dans le template
   private cartSvc = inject(CartService);
 
@@ -43,7 +47,6 @@ export class CartItems implements OnInit, OnDestroy {
     this.meta = this.cartSvc.getMeta();
   }
 
-  // --- Totaux unifiés via service ---
   get subtotal(): number {
     return this.cartSvc.calcSubtotal(this.cart);
   }
@@ -148,4 +151,30 @@ export class CartItems implements OnInit, OnDestroy {
     });
     this.load();
   }
+  async proceedToCheckout() {
+  const user = this.auth.currentUser();
+
+  if (!user) {
+    const res = await Swal.fire({
+      title: 'Connexion requise',
+      text: 'Veuillez vous connecter pour procéder au paiement 💙',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: 'Se connecter',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#2563eb', // bleu
+      cancelButtonColor: '#6b7280', // gris
+    });
+
+    if (res.isConfirmed) {
+      this.router.navigate(['/auth/signin']);
+    }
+
+    return; // 🔥 Stop ici si non connecté
+  }
+
+  // ✅ Si connecté → aller vers checkout
+  this.router.navigate(['/checkout']);
+}
+
 }

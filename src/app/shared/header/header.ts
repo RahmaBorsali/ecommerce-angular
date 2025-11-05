@@ -30,20 +30,16 @@ export class Header implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updateCartCount();
-    this.refreshAuth();                                // 👈 initialise l’état
-    window.addEventListener('authChanged', this.onAuthChanged); // 👈 NEW
+    this.refreshAuth();
+    window.addEventListener('authChanged', this.onAuthChanged);
     window.addEventListener('cartUpdated', this.onCartEvents as EventListener);
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('authChanged', this.onAuthChanged); // 👈 NEW
+    window.removeEventListener('authChanged', this.onAuthChanged);
     window.removeEventListener('cartUpdated', this.onCartEvents as EventListener);
   }
 
-  private refreshAuth(): void {
-    this.isLoggedIn = this.auth.isLoggedIn();          // 👈 basé sur app.session
-    this.currentUser = this.auth.currentUser();        // (peut être null si app.users vide)
-  }
 
   goToAccount(): void {
     this.refreshAuth();                                // rafraîchit avant de router
@@ -58,29 +54,26 @@ export class Header implements OnInit, OnDestroy {
   {
     try {
       const users = JSON.parse(localStorage.getItem('users') || '[]') as any[];
-      // 1) authUserId + users
       const id = localStorage.getItem('authUserId');
       if (id && Array.isArray(users) && users.length) {
         const byId = users.find(u => String(u.id) === String(id));
         if (byId) return byId;
       }
-      // 2) authUser direct
       const authUserRaw = localStorage.getItem('authUser');
       if (authUserRaw) {
         const authUser = JSON.parse(authUserRaw);
-        // merge avec users si possible
         if (Array.isArray(users) && users.length) {
           const fromList = users.find(u => String(u.id) === String(authUser.id));
           return { ...fromList, ...authUser };
         }
         return authUser;
       }
-      // 3) fallback: aucun
       return null;
     } catch {
       return null;
     }
   }
+
 
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
@@ -121,14 +114,58 @@ handleSearch(ev?: Event) {
     }
   }
 
-  private updateCartCount(): void {
-    try {
-      const raw = localStorage.getItem('cart');
-      const items: any[] = raw ? JSON.parse(raw) : [];
-      // somme des quantités, comme dans ton React
-      this.cartCount = items.reduce((sum, it: any) => sum + (Number(it.quantity) || 1), 0);
-    } catch {
-      this.cartCount = 0;
+private updateCartCount(): void {
+  try {
+    const user = this.auth.currentUser();
+    let uid: string;
+
+    // Utilisateur connecté ?
+    if (user?.id) {
+      uid = String(user.id);
+    } else {
+      // Invité : utiliser le même mécanisme que CartService
+      let gid = sessionStorage.getItem('app.guestId');
+      if (!gid) {
+        gid = crypto.randomUUID();
+        sessionStorage.setItem('app.guestId', gid);
+      }
+      uid = `guest-${gid}`;
     }
+
+    // Lecture du panier
+    const raw = localStorage.getItem(`app.cart.${uid}`);
+    const items: any[] = raw ? JSON.parse(raw) : [];
+
+    // Somme des quantités
+    this.cartCount = items.reduce(
+      (sum, it: any) => sum + (Number(it.quantity) || 1),
+      0
+    );
+  } catch {
+    this.cartCount = 0;
   }
+}
+
+
+  private buildAvatarUrl(u: User | null): string | null {
+  if (!u) return null;
+
+  // 1) Priorité à l’avatar stocké (profile)
+  if ((u as any).avatarUrl && String((u as any).avatarUrl).trim()) {
+    return String((u as any).avatarUrl).trim();
+  }
+
+  // 2) Fallback: avatar initiales via ui-avatars
+  const first = (u as any).firstName ?? '';
+  const last  = (u as any).lastName ?? '';
+  const name  = encodeURIComponent(`${first || ''} ${last || ''}`.trim() || 'User');
+  return `https://ui-avatars.com/api/?name=${name}&background=2563eb&color=fff`;
+}
+
+private refreshAuth(): void {
+  this.isLoggedIn = this.auth.isLoggedIn();
+  this.currentUser = this.auth.currentUser();
+  this.avatarUrl = this.buildAvatarUrl(this.currentUser);
+}
+
 }

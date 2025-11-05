@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink,Router } from '@angular/router';
 import { Header } from '../../shared/header/header';
 import { Footer } from '../../shared/footer/footer';
 import { ProductStore, Product } from '../../services/product-store';
@@ -10,6 +10,7 @@ import { FakeStore } from '../../services/fakestore';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { take } from 'rxjs/operators';
+import { WishlistService } from '../../services/wishlist.service';
 
 type Spec = { label: string; value: string };
 type Review = { author: string; rating: number; date: string; comment: string };
@@ -21,6 +22,8 @@ type Review = { author: string; rating: number; date: string; comment: string };
   templateUrl: './product-details.page.html',
 })
 export class ProductDetailPage implements OnInit {
+  private router = inject(Router);
+
   private route = inject(ActivatedRoute);
   private store = inject(ProductStore);
   private cart = inject(CartService);
@@ -43,6 +46,8 @@ export class ProductDetailPage implements OnInit {
   reviews: Review[] = []; // ⚠️ inclut les avis stockés en local
 
   qty = 1;
+  private wishlist = inject(WishlistService);
+  isFav = false;
 
   // ---- Avis (form) ----
   submittingReview = false;
@@ -186,7 +191,51 @@ export class ProductDetailPage implements OnInit {
     if (u && !this.reviewForm.value.author) {
       this.reviewForm.patchValue({ author: `${u.firstName} ${u.lastName}`.trim() });
     }
+    this.isFav = this.wishlist.isFavorite(Number(p.id));
+
   }
+toggleFav() {
+  if (!this.product) return;
+
+  const user = this.auth.currentUser(); // vérifie si connecté
+  if (!user) {
+    Swal.fire({
+      title: 'Connexion requise',
+      text: 'Veuillez vous connecter pour ajouter des produits à vos favoris 💙',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: 'Se connecter',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#2563eb', // bleu
+      cancelButtonColor: '#6b7280', // gris
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.router.navigate(['/auth/signin']);
+      }
+    });
+    return;
+  }
+
+  // ✅ si connecté : on ajoute / retire le favori normalement
+  this.wishlist.toggle({
+    id: Number(this.product.id),
+    title: this.product.title,
+    price: this.product.price,
+    image: this.images[this.current] ?? this.product.image,
+  });
+
+  this.isFav = this.wishlist.isFavorite(Number(this.product.id));
+
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    timer: 1200,
+    showConfirmButton: false,
+    icon: this.isFav ? 'success' : 'info',
+    title: this.isFav ? 'Ajouté aux favoris ❤' : 'Retiré des favoris',
+  });
+}
+
 
   // ⭐ notation produit principal
   rateRounded(): number {
