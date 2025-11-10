@@ -23,21 +23,21 @@ export class HeroSlider implements OnInit, OnDestroy {
       description: 'Découvrez les derniers smartphones et laptops',
       image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1600',
       cta: 'Découvrir',
-      link: '/products',
+      link: '/catalog',
     },
     {
       title: 'Gaming Extrême',
       description: 'Équipez-vous pour la victoire',
       image: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=1600',
       cta: 'Voir les offres',
-      link: '/products?category=gaming',
+      link: '/promotions',
     },
     {
       title: 'Audio Premium',
       description: 'Son exceptionnel à prix imbattable',
       image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1600',
       cta: 'Explorer',
-      link: '/products?category=audio',
+      link: '/catalog',
     },
   ];
 
@@ -62,5 +62,17 @@ export class HeroSlider implements OnInit, OnDestroy {
 
   isActive(i: number): boolean {
     return this.current === i;
+  }
+  getQueryParams(s: Slide) {
+    if (s.title.includes('Tech')) {
+      return { category: 'electronique' };
+    }
+    if (s.title.includes('Gaming')) {
+      return {};
+    }
+    if (s.title.includes('Audio')) {
+      return { category: 'audio' };
+    }
+    return {};
   }
 }

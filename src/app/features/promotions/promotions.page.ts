@@ -7,6 +7,7 @@ import { Header } from '../../shared/header/header';
 import { Footer } from '../../shared/footer/footer';
 import { ProductStore, Product } from '../../services/product-store';
 import { CartService } from '../../services/cart.service';
+import Swal from 'sweetalert2';
 
 type ProductPromo = Product & {
   oldPrice?: number;
@@ -88,6 +89,15 @@ private selectPromotions(all: Product[]): ProductPromo[] {
       image: p.image,
       quantity: 1
     });
+    Swal.fire({
+    icon: 'success',
+    title: 'Produit ajouté !',
+    text: `"${p.title}" a été ajouté à votre panier.`,
+    timer: 2000,
+    showConfirmButton: false,
+    position: 'top-end',
+    toast: true,
+  });
   }
 
   reload() {

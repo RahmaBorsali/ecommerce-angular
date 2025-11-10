@@ -184,6 +184,7 @@ export class CatalogPage implements OnInit {
 
   }
 
+
   reload() {
     this.ngOnInit();
   }

@@ -1,71 +1,71 @@
-<footer class="bg-gray-900 text-white mt-16">
-  <div class="container mx-auto px-4 py-10">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-      <!-- LOGO & DESCRIPTION -->
-      <div>
-        <h3 class="text-2xl font-bold mb-4 text-yellow-500">ElectroSpace</h3>
-        <p class="text-gray-400">
-          Votre destination pour les meilleurs produits électroniques, audio et gaming.
-        </p>
+  <footer class="bg-gray-900 text-white mt-16">
+    <div class="container mx-auto px-4 py-10">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <!-- LOGO & DESCRIPTION -->
+        <div>
+          <h3 class="text-2xl font-bold mb-4 text-yellow-500">ElectroSpace</h3>
+          <p class="text-gray-400">
+            Votre destination pour les meilleurs produits électroniques, audio et gaming.
+          </p>
+        </div>
+
+        <!-- NAVIGATION -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Navigation</h4>
+          <ul class="space-y-2 text-gray-400">
+            <li><a [routerLink]="'/catalog'" class="hover:text-yellow-500 transition-colors">Catalogue</a></li>
+            <li><a routerLink="/cart" class="hover:text-yellow-500 transition-colors">Panier</a></li>
+            <li><a (click)="goToAccount()" class="hover:text-yellow-500 transition-colors cursor-default">Mon compte</a></li>
+          </ul>
+        </div>
+
+        <!-- CATÉGORIES -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Catégories</h4>
+          <ul class="space-y-2 text-gray-400">
+            <li>
+              <a
+                [routerLink]="['/catalog']"
+                [queryParams]="{ category: 'electronique' }"
+                class="hover:text-yellow-500 transition-colors"
+              >
+                Électronique
+              </a>
+            </li>
+            <li>
+              <a
+                [routerLink]="['/catalog']"
+                [queryParams]="{ category: 'gaming' }"
+                class="hover:text-yellow-500 transition-colors"
+              >
+                Gaming
+              </a>
+            </li>
+            <li>
+              <a
+                [routerLink]="['/catalog']"
+                [queryParams]="{ category: 'audio' }"
+                class="hover:text-yellow-500 transition-colors"
+              >
+                Audio
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- CONTACT -->
+        <div>
+          <h4 class="font-semibold mb-4 text-white">Contact</h4>
+          <ul class="space-y-2 text-gray-400">
+            <li>Email : contact@electrospace.com</li>
+            <li>Tél : +216 50 541 931</li>
+          </ul>
+        </div>
       </div>
 
-      <!-- NAVIGATION -->
-      <div>
-        <h4 class="font-semibold mb-4 text-white">Navigation</h4>
-        <ul class="space-y-2 text-gray-400">
-          <li><a [routerLink]="'/catalog'" class="hover:text-yellow-500 transition-colors">Catalogue</a></li>
-          <li><a routerLink="/cart" class="hover:text-yellow-500 transition-colors">Panier</a></li>
-          <li><a routerLink="/auth/signin" class="hover:text-yellow-500 transition-colors">Mon compte</a></li>
-        </ul>
-      </div>
-
-      <!-- CATÉGORIES -->
-      <div>
-        <h4 class="font-semibold mb-4 text-white">Catégories</h4>
-        <ul class="space-y-2 text-gray-400">
-          <li>
-            <a
-              [routerLink]="['/catalog']"
-              [queryParams]="{ category: 'electronique' }"
-              class="hover:text-yellow-500 transition-colors"
-            >
-              Électronique
-            </a>
-          </li>
-          <li>
-            <a
-              [routerLink]="['/catalog']"
-              [queryParams]="{ category: 'gaming' }"
-              class="hover:text-yellow-500 transition-colors"
-            >
-              Gaming
-            </a>
-          </li>
-          <li>
-            <a
-              [routerLink]="['/catalog']"
-              [queryParams]="{ category: 'audio' }"
-              class="hover:text-yellow-500 transition-colors"
-            >
-              Audio
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- CONTACT -->
-      <div>
-        <h4 class="font-semibold mb-4 text-white">Contact</h4>
-        <ul class="space-y-2 text-gray-400">
-          <li>Email : contact@electrospace.com</li>
-          <li>Tél : +216 50 541 931</li>
-        </ul>
+      <!-- COPYRIGHT -->
+      <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-sm">
+        <p>&copy; {{ year }} ElectroSpace. Tous droits réservés.</p>
       </div>
     </div>
-
-    <!-- COPYRIGHT -->
-    <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400 text-sm">
-      <p>&copy; {{ year }} ElectroSpace. Tous droits réservés.</p>
-    </div>
-  </div>
-</footer>
+  </footer>
