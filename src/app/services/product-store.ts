@@ -10,15 +10,17 @@ export type Product = {
   id: number;
   title: string;
   price: number;
-  rating: number; // 0..5
+  oldPrice?: number;
+  discountPercent?: number;
+  rating: number;
   image: string;
   category: string;
   description?: string;
-  // 👇 champs propres à chaque produit
   stock?: number;
   specs?: Spec[];
   reviews?: Review[];
   images?: string[];
+
 };
 
 const PRODUCTS_RAW: Product[] = [

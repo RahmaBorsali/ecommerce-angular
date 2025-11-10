@@ -58,31 +58,27 @@ export class PromotionsPage implements OnInit {
     }
   }
 
-  /** Sélectionne les produits en promo.
-   *  Branche ici ta vraie logique si tu as compareAtPrice/discount côté backend.
-   */
-  private selectPromotions(all: Product[]): ProductPromo[] {
-    const enriched: ProductPromo[] = (all || []).map(p => {
-      // Si tu as déjà p.compareAtPrice -> calcule exact :
-      // const old = p.compareAtPrice;
-      // const disc = old && old > p.price ? Math.round(((old - p.price) / old) * 100) : undefined;
+private selectPromotions(all: Product[]): ProductPromo[] {
+  const enriched: ProductPromo[] = (all || []).map(p => {
+    const cat = (p.category || '').toLowerCase();
+    const flagged = /audio|gaming|electronique|electronics/.test(cat);
 
-      // Fallback démo: si la catégorie contient 'audio'/'gaming', on met une remise fictive
-      const cat = (p.category || '').toLowerCase();
-      const flagged = /audio|gaming|electronique|electronics/.test(cat);
-      const discountPercent = flagged ? [10,15,20,25,30][Math.floor(Math.random()*5)] : undefined;
-      const oldPrice = discountPercent ? +(p.price / (1 - discountPercent/100)).toFixed(2) : undefined;
+    // 🔸 Pourcentage aléatoire de réduction
+    const discountPercent = flagged ? [10, 15, 20, 25, 30][Math.floor(Math.random() * 5)] : undefined;
 
-      return { ...p, discountPercent, oldPrice };
-    });
+    // 🔸 Calcul des prix en DT
+    const oldPrice = p.price; // Prix initial
+    const promoPrice = discountPercent ? +(oldPrice * (1 - discountPercent / 100)).toFixed(2) : oldPrice;
 
-    // garde ceux qui ont une remise
-    const promos = enriched.filter(p => p.discountPercent);
-    // tri par remise décroissante
-    promos.sort((a,b) => (b.discountPercent||0) - (a.discountPercent||0));
-    // limite (modifie à ta guise)
-    return promos.slice(0, 12);
-  }
+    return { ...p, oldPrice, price: promoPrice, discountPercent };
+  });
+
+  const promos = enriched.filter(p => p.discountPercent);
+  promos.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
+  return promos.slice(0, 12);
+}
+
+
 
   addToCart(p: ProductPromo) {
     this.cart.addToCart({
