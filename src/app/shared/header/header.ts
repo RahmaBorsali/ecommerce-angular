@@ -40,30 +40,25 @@ export class Header implements OnInit, OnDestroy {
     window.removeEventListener('cartUpdated', this.onCartEvents as EventListener);
   }
 
-
   goToAccount(): void {
-    this.refreshAuth();                                // rafraîchit avant de router
-    this.router.navigate([ this.isLoggedIn ? '/account/profile' : '/auth/signin' ]);
+    this.refreshAuth(); // rafraîchit
+    this.router.navigate([this.isLoggedIn ? '/account/profile' : '/auth/signin']);
   }
 
-
-  // 👇 NEW: récupère l’utilisateur courant selon les clés courantes
-  private getCurrentUser():
-    | { id: string | number; email: string; avatarUrl?: string }
-    | null
-  {
+  // récupère l’utilisateur courant selon les clés courantes
+  private getCurrentUser(): { id: string | number; email: string; avatarUrl?: string } | null {
     try {
       const users = JSON.parse(localStorage.getItem('users') || '[]') as any[];
       const id = localStorage.getItem('authUserId');
       if (id && Array.isArray(users) && users.length) {
-        const byId = users.find(u => String(u.id) === String(id));
+        const byId = users.find((u) => String(u.id) === String(id));
         if (byId) return byId;
       }
       const authUserRaw = localStorage.getItem('authUser');
       if (authUserRaw) {
         const authUser = JSON.parse(authUserRaw);
         if (Array.isArray(users) && users.length) {
-          const fromList = users.find(u => String(u.id) === String(authUser.id));
+          const fromList = users.find((u) => String(u.id) === String(authUser.id));
           return { ...fromList, ...authUser };
         }
         return authUser;
@@ -73,7 +68,6 @@ export class Header implements OnInit, OnDestroy {
       return null;
     }
   }
-
 
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
@@ -95,17 +89,14 @@ export class Header implements OnInit, OnDestroy {
   closeSearch() {
     this.isSearchOpen = false;
   }
-handleSearch(ev?: Event) {
-  ev?.preventDefault();
-  const q = (this.searchQuery || '').trim();
-  if (!q) return;
-  this.router.navigate(['/search'], { queryParams: { q } });
-  this.closeSearch();
-}
+  handleSearch(ev?: Event) {
+    ev?.preventDefault();
+    const q = (this.searchQuery || '').trim();
+    if (!q) return;
+    this.router.navigate(['/search'], { queryParams: { q } });
+    this.closeSearch();
+  }
 
-
-
-  // Raccourci clavier "/" pour ouvrir et focus
   @HostListener('document:keydown', ['$event'])
   onKey(e: KeyboardEvent) {
     if (e.key === '/' && !this.isSearchOpen) {
@@ -114,58 +105,53 @@ handleSearch(ev?: Event) {
     }
   }
 
-private updateCartCount(): void {
-  try {
-    const user = this.auth.currentUser();
-    let uid: string;
+  private updateCartCount(): void {
+    try {
+      const user = this.auth.currentUser();
+      let uid: string;
 
-    // Utilisateur connecté ?
-    if (user?.id) {
-      uid = String(user.id);
-    } else {
-      // Invité : utiliser le même mécanisme que CartService
-      let gid = sessionStorage.getItem('app.guestId');
-      if (!gid) {
-        gid = crypto.randomUUID();
-        sessionStorage.setItem('app.guestId', gid);
+      // Utilisateur connecté ?
+      if (user?.id) {
+        uid = String(user.id);
+      } else {
+        // Invité
+        let gid = sessionStorage.getItem('app.guestId');
+        if (!gid) {
+          gid = crypto.randomUUID();
+          sessionStorage.setItem('app.guestId', gid);
+        }
+        uid = `guest-${gid}`;
       }
-      uid = `guest-${gid}`;
+
+      // Lecture du panier
+      const raw = localStorage.getItem(`app.cart.${uid}`);
+      const items: any[] = raw ? JSON.parse(raw) : [];
+
+      // Somme des quantités
+      this.cartCount = items.reduce((sum, it: any) => sum + (Number(it.quantity) || 1), 0);
+    } catch {
+      this.cartCount = 0;
     }
-
-    // Lecture du panier
-    const raw = localStorage.getItem(`app.cart.${uid}`);
-    const items: any[] = raw ? JSON.parse(raw) : [];
-
-    // Somme des quantités
-    this.cartCount = items.reduce(
-      (sum, it: any) => sum + (Number(it.quantity) || 1),
-      0
-    );
-  } catch {
-    this.cartCount = 0;
   }
-}
-
 
   private buildAvatarUrl(u: User | null): string | null {
-  if (!u) return null;
+    if (!u) return null;
 
-  // 1) Priorité à l’avatar stocké (profile)
-  if ((u as any).avatarUrl && String((u as any).avatarUrl).trim()) {
-    return String((u as any).avatarUrl).trim();
+    // Priorité à l’avatar stocké (profile)
+    if ((u as any).avatarUrl && String((u as any).avatarUrl).trim()) {
+      return String((u as any).avatarUrl).trim();
+    }
+
+    // Fallback: avatar initiales via ui-avatars
+    const first = (u as any).firstName ?? '';
+    const last = (u as any).lastName ?? '';
+    const name = encodeURIComponent(`${first || ''} ${last || ''}`.trim() || 'User');
+    return `https://ui-avatars.com/api/?name=${name}&background=2563eb&color=fff`;
   }
 
-  // 2) Fallback: avatar initiales via ui-avatars
-  const first = (u as any).firstName ?? '';
-  const last  = (u as any).lastName ?? '';
-  const name  = encodeURIComponent(`${first || ''} ${last || ''}`.trim() || 'User');
-  return `https://ui-avatars.com/api/?name=${name}&background=2563eb&color=fff`;
-}
-
-private refreshAuth(): void {
-  this.isLoggedIn = this.auth.isLoggedIn();
-  this.currentUser = this.auth.currentUser();
-  this.avatarUrl = this.buildAvatarUrl(this.currentUser);
-}
-
+  private refreshAuth(): void {
+    this.isLoggedIn = this.auth.isLoggedIn();
+    this.currentUser = this.auth.currentUser();
+    this.avatarUrl = this.buildAvatarUrl(this.currentUser);
+  }
 }

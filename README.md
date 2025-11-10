@@ -1,59 +1,285 @@
-# EcommerceApp
+# 🛍️ ElectroSpace
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.5.
+## 📖 Description du projet
+**ElectroSpace** est une application web de commerce électronique moderne développée avec **Angular** dans le cadre du *Challenge Front-End 2025*.  
+Elle offre une **expérience d’achat fluide, rapide et responsive**, tout en appliquant les meilleures pratiques front-end : *routing modulaire*, *lazy loading*, *RxJS pour la gestion d’état*, *intercepteurs HTTP*, et *gestion centralisée des erreurs*.
 
-## Development server
+L’application combine intelligemment **l’API publique [FakeStore](https://fakestoreapi.com/)** et des **fichiers TypeScript internes** pour enrichir les données simulées (stocks, caractéristiques, avis clients, etc.).  
+Cette architecture hybride permet de démontrer la gestion complète d’un e-commerce sans backend réel.
 
-To start a local development server, run:
+### 🎯 Objectifs pédagogiques
+- Concevoir et développer une **application responsive** moderne.  
+- Maîtriser le framework **Angular 20** et ses bonnes pratiques.  
+- Implémenter une **navigation fluide et intuitive**.  
+- Gérer efficacement **l’état de l’application**.  
+- Offrir une **expérience utilisateur claire et cohérente**.
 
+### 🧩 Valeur ajoutée du projet
+ElectroSpace illustre une **architecture front-end réaliste** combinant appels API et données locales.  
+C’est une base solide pour tout futur projet e-commerce complet : intégration d’un backend, authentification réelle, ou gestion des paiements.
+
+## 🧰 Technologies utilisées
+
+### 🔹 Framework principal
+- **Angular 20** – Framework front-end choisi pour sa structure modulaire, sa gestion réactive via RxJS et son CLI performant.
+- **TypeScript** – Langage fortement typé pour une meilleure maintenabilité et lisibilité du code.
+
+### 🔹 Styling & Design
+- **SCSS (SASS)** – Préprocesseur CSS utilisé pour structurer et factoriser le style (mixins, variables, nesting).  
+- **Tailwind CSS** *(optionnel)* – Utilisé pour accélérer le prototypage et garantir un design moderne et responsive.
+- **Angular Material** – Pour certains composants d’interface (boutons, champs, stepper, etc.), assurant cohérence et accessibilité.
+
+### 🔹 Gestion de l’état & des données
+- **RxJS / Services Angular** – Gestion réactive des flux de données et communication entre composants.  
+- **FakeStore API** – Fournit les données principales (produits, catégories, prix, images).  
+- **Fichiers TypeScript internes** – Ajout de données locales enrichies : stock, caractéristiques techniques, avis, etc.  
+- **localStorage** – Persistance du panier et de la session utilisateur.
+
+### 🔹 Outils & environnement
+- **Node.js / npm** – Installation et gestion des dépendances.  
+- **Angular CLI** – Outil de génération et de compilation du projet.  
+- **Git / GitHub** – Gestion de version et hébergement du code source.  
+- **GitHub Pages** *(déploiement optionnel)* – Pour héberger la version finale de l’application.
+
+### 🔹 Bonus techniques (optionnels)
+- **Animations Angular** – Pour les transitions entre pages et les loaders.  
+- **Responsive Design** – Adaptation complète sur mobile, tablette et desktop.  
+- **Validation Reactive Forms** – Pour l’inscription et la connexion avec messages d’erreur dynamiques.
+
+## ⚙️ Instructions d'installation et de lancement
+
+### 1️⃣ Cloner le projet
+Commence par cloner le dépôt GitHub sur ta machine :
+
+```bash
+git clone https://github.com/RahmaBorsali/ecommerce-angular.git
+cd ecommerce-angular
+```
+
+### 2️⃣ Installer les dépendances
+Installe toutes les dépendances nécessaires avec npm :
+
+```bash
+npm install
+```
+### 3️⃣ Lancer le serveur de développement
+Démarre le projet en mode développement :
 ```bash
 ng serve
 ```
+Une fois le serveur lancé, ouvre ton navigateur à l’adresse : `http://localhost:4200/`
+L’application se recharge automatiquement à chaque modification du code source.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### 4️⃣ Générer une version de production
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+Pour créer une version optimisée prête à être déployée :
 ```bash
-ng generate component component-name
+ng build --configuration production
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Les fichiers générés se trouvent dans le dossier dist/.
+
+### 5️⃣ Déploiement sur GitHub Pages
 
 ```bash
-ng generate --help
+ng add angular-cli-ghpages
+ng deploy
 ```
 
-## Building
+## 🗂️ Structure du projet
 
-To build the project run:
+Voici la structure générale du projet **ElectroSpace** :
 
-```bash
-ng build
-```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+<p align="center">
+  <img src="./src/assets/caps/cap1.png" width="400">
+  <img src="./src/assets/caps/cap2.png"  width="400">
+  <img src="./src/assets/caps/cap3.png"  width="400">
+  <img src="./src/assets/caps/cap4.png"  width="400">
+</p>
 
-## Running unit tests
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
 
-```bash
-ng test
-```
 
-## Running end-to-end tests
+### 🧩 Organisation modulaire
+Chaque fonctionnalité principale est développée dans un **module indépendant**, avec ses propres composants, services et styles.  
+Cette approche favorise la **maintenabilité**, la **réutilisabilité** et la **clarté du code**.
 
-For end-to-end (e2e) testing, run:
 
-```bash
-ng e2e
-```
+### 🔄 Communication entre composants
+- Les **services Angular** (comme `ProductStore` ou `CartService`) assurent la gestion centralisée de l’état et la communication entre les pages.  
+- L’utilisation d’**RxJS** permet une synchronisation en temps réel entre les vues (par exemple, mise à jour du panier).
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
-## Additional Resources
+## ✨ Fonctionnalités implémentées
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+L’application **ElectroSpace** respecte toutes les fonctionnalités **obligatoires** du challenge, ainsi que plusieurs **améliorations bonus**.
+
+### 🏠 Page d’accueil
+- Carousel / slider présentant les **produits en promotion** ou **nouveautés**.  
+- Affichage des **catégories de produits** sous forme de cartes cliquables.  
+- Section de **produits vedettes** (minimum 8 produits).  
+- Barre de **recherche fonctionnelle** permettant de filtrer les produits par nom.  
+- Navigation principale dynamique avec redirection vers les différentes pages.
+
+### 🛍️ Catalogue de produits
+- Grille de produits avec :
+  - Image, nom, prix, note (étoiles), et bouton **“Ajouter au panier”**.  
+- **Filtres dynamiques** :
+  - Par catégorie  
+  - Par plage de prix  
+  - Par note d’évaluation  
+- **Tri** :
+  - Prix croissant / décroissant  
+  - Popularité / Nouveauté  
+- **Pagination** automatique ou scroll infini.  
+- Chargement avec indicateurs visuels (loader).
+
+### 🧾 Page détail produit
+- **Galerie d’images** du produit (3 images minimum).  
+- Informations détaillées :
+  - Nom, description complète, prix, disponibilité, caractéristiques.  
+  - Avis et évaluations clients (mockés ou via FakeStore).  
+- Sélection de **quantité** avant ajout au panier.  
+- Section “**Produits similaires**” générée automatiquement.
+
+
+### 🛒 Panier d’achat
+- Liste complète des articles ajoutés :
+  - Image miniature, nom, prix unitaire, quantité, sous-total.  
+- **Mise à jour dynamique** des quantités et suppression d’articles.  
+- **Récapitulatif du panier** :
+  - Sous-total, frais de livraison, total global.  
+- **Persistance locale** grâce au `localStorage` (le panier reste sauvegardé après rechargement).  
+- Bouton **“Procéder au paiement”**.
+
+### 🔐 Authentification
+- **Page d’inscription** avec validation des champs :
+  - Nom, prénom, email, mot de passe, adresse.  
+- **Page de connexion** simulant une authentification (session locale).  
+- **Formulaires réactifs** (`Reactive Forms`) avec messages d’erreur personnalisés.  
+- Gestion de la session utilisateur simulée (via `localStorage`).
+
+### 💳 Processus de commande (Bonus)
+- Page **checkout** avec :
+  - Récapitulatif des articles du panier.  
+  - Formulaire d’adresse de livraison.  
+  - Choix du mode de livraison et paiement simulé.  
+- Page **confirmation de commande** avec message de succès.
+
+### 👤 Espace utilisateur (Bonus)
+- Page de **profil** (mockée) avec informations personnelles.  
+- Historique des commandes simulé.  
+- Système de **favoris** / **wishlist** (optionnel).
+
+### ⚡ Autres fonctionnalités techniques
+- **Gestion des erreurs** et affichage de messages adaptés.  
+- **Animations Angular** pour les transitions et effets de survol.  
+- **Responsive design** complet (mobile, tablette, desktop).  
+- **Accessibilité** : labels, contrastes, navigation clavier.  
+- **Code propre et modulaire**, basé sur des composants réutilisables.
+
+## ⚠️ Difficultés rencontrées
+
+Durant le développement du projet **ElectroSpace**, plusieurs difficultés techniques ont été rencontrées et ont nécessité une réelle phase d’apprentissage et de recherche :
+
+
+### 🔹 1. Intégration de l’API FakeStore
+C’était la **première fois** que j’intégrais une API REST externe dans un projet Angular.  
+La principale difficulté a été de :
+- comprendre la **structure des données retournées** par FakeStore,  
+- gérer les **appels HTTP asynchrones** avec `HttpClient` et `RxJS`,  
+- traiter les erreurs (API non disponible, latence réseau, etc.).  
+
+> 💡 J’ai surmonté cela en créant un **service dédié (`FakeStoreService`)** avec gestion des observables et d’un **interceptor** pour suivre les requêtes HTTP.
+
+
+
+### 🔹 2. Fusion des données API + fichiers TypeScript
+La combinaison entre les données externes (FakeStore) et les **fichiers TypeScript locaux** enrichis (stock, caractéristiques, avis, etc.) a été complexe.  
+Il fallait maintenir la cohérence entre les deux sources sans backend réel.  
+> 💡 J’ai utilisé des **mappings typés** (`Product` interface) et des **opérateurs RxJS (`map`, `mergeMap`)** pour fusionner les données proprement.
+
+
+
+### 🔹 3. Déploiement sur GitHub Pages
+Le déploiement avec `ng deploy` nécessitait de configurer correctement le **base href** et le **routing Angular** pour éviter les erreurs 404.  
+> 💡 Après plusieurs tests, j’ai compris comment ajuster le `angular.json` et utiliser la commande `ng add angular-cli-ghpages`.
+
+
+
+Ces difficultés m’ont permis de renforcer ma compréhension d’**Angular**, de la **programmation réactive (RxJS)**, et de la **gestion de données API** dans un contexte réel de projet.
+
+## 🖼️ Captures d’écran
+
+Voici un aperçu visuel de l’application **ElectroSpace** et de ses principales pages.
+
+
+
+### 🏠 Page d’accueil
+<p align="center">
+  <img src="./src/assets/caps/c1.png" alt="Page d'accueil" width="260">
+  <img src="./src/assets/caps/c2.png" alt="Page d'accueil 2" width="260">
+  <img src="./src/assets/caps/c3.png" alt="Page d'accueil 3" width="260">
+</p>
+
+
+
+### 🛍️ Catalogue de produits
+<p align="center">
+  <img src="./src/assets/caps/c4.png" alt="Catalogue produits" width="260">
+  <img src="./src/assets/caps/c5.png" alt="Catalogue produits 2" width="260">
+</p>
+
+
+
+### 🧾 Détail produit
+<p align="center">
+  <img src="./src/assets/caps/c10.png" alt="Détail produit " width="260">
+  <img src="./src/assets/caps/c11.png" alt="Détail produit " width="260">
+  <img src="./src/assets/caps/c12.png" alt="Détail produit " width="260">
+</p>
+
+### 🪄 Promotions & Offres spéciales
+<p align="center">
+  <img src="./src/assets/caps/c13.png" alt="Page promotions 1" width="260">
+</p>
+
+
+
+### 🛒 Panier d’achat
+<p align="center">
+  <img src="./src/assets/caps/c6.png" alt="Panier" width="260">
+</p>
+
+
+
+
+
+
+
+### 💳 Checkout & Confirmation
+<p align="center">
+  <img src="./src/assets/caps/c7.png" width="260">
+  <img src="./src/assets/caps/c8.png"  width="260">
+    <img src="./src/assets/caps/c9.png"  width="260">
+
+</p>
+
+### 🔐 Authentification (Inscription / Connexion)
+<p align="center">
+  <img src="./src/assets/caps/c19.png" alt="Connexion" width="260">
+  <img src="./src/assets/caps/c18.png" alt="Inscription" width="260">
+</p>
+
+### 👤 Profil utilisateur
+<p align="center">
+  <img src="./src/assets/caps/c14.png" width="260">
+  <img src="./src/assets/caps/c15.png" width="260">
+  <img src="./src/assets/caps/c16.png" width="260">
+  <img src="./src/assets/caps/c17.png" width="260">
+</p>
+
+
+
+

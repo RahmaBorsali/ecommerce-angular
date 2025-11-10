@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, of, switchMap, Observable,throwError  } from 'rxjs';
+import { map, of, switchMap, Observable, throwError } from 'rxjs';
 /** Types additionnels */
 export type Spec = { label: string; value: string };
 export type Review = { author: string; rating: number; date: string; comment: string };
@@ -20,7 +20,6 @@ export type Product = {
   specs?: Spec[];
   reviews?: Review[];
   images?: string[];
-
 };
 
 const PRODUCTS_RAW: Product[] = [
@@ -525,7 +524,7 @@ export class ProductStore {
     return throwError(() => new Error('not-found'));
   }
 
-  /** ✅ Nouvelle méthode: accepte un slug "fs-5" OU un id "12" */
+  /**  accepte un slug "fs-5" OU un id "12" */
   getOneByKey$(key: string): Observable<Product> {
     const m = /^fs-(\d+)$/.exec(key); // ex: fs-5 = FakeStore id 5
     if (m) return this.fetchApiProduct$(Number(m[1]));
@@ -553,7 +552,7 @@ export class ProductStore {
               description: api.description,
               stock: 10,
               images: [api.image],
-              // 🔑 utile pour routerLink côté grille
+              //  utile pour routerLink côté grille
               // @ts-ignore: on tolère un champ d'affichage
               slug: `fs-${api.id}`,
             } as Product & { slug: string })
@@ -568,7 +567,7 @@ export class ProductStore {
     );
   }
 
-  /** 🔹 Catégories fusionnées */
+  /** Catégories fusionnées */
   getCategories$() {
     return this.getAllMerged$().pipe(map((all) => Array.from(new Set(all.map((p) => p.category)))));
   }

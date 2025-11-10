@@ -32,5 +32,4 @@ export class AuthFakeStore {
   isAuthenticated(): boolean {
     return !!localStorage.getItem('accessToken');
   }
-
 }

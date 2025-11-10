@@ -12,17 +12,17 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class Footer {
   year = new Date().getFullYear();
-   isLoggedIn = false;
-     currentUser: User | null = null;
-       constructor(private router: Router) {}
+  isLoggedIn = false;
+  currentUser: User | null = null;
+  constructor(private router: Router) {}
   private auth = inject(AuthService);
 
   goToAccount(): void {
     this.refreshAuth();
-    this.router.navigate([ this.isLoggedIn ? '/account/profile' : '/auth/signin' ]);
+    this.router.navigate([this.isLoggedIn ? '/account/profile' : '/auth/signin']);
   }
   private refreshAuth(): void {
-  this.isLoggedIn = this.auth.isLoggedIn();
-  this.currentUser = this.auth.currentUser();
-}
+    this.isLoggedIn = this.auth.isLoggedIn();
+    this.currentUser = this.auth.currentUser();
+  }
 }

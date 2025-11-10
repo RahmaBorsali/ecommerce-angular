@@ -3,9 +3,8 @@
 >
   <div class="container mx-auto px-4">
     <div class="flex items-center justify-between py-4">
-      <!-- ✅ LOGO + NOM -->
       <a routerLink="/" class="flex items-center gap-3">
-        <!-- IMAGE DU LOGO -->
+        <!--Logo-->
         <img
           src="assets/logo6.jpg"
           alt="ElectroSpace Logo"
@@ -17,8 +16,7 @@
           ElectroSpace
         </span>
       </a>
-
-      <!-- NAVIGATION -->
+      <!-- Menu -->
       <nav class="hidden lg:flex items-center gap-8">
         <a
           routerLink="/"
@@ -40,45 +38,19 @@
           ></span>
         </a>
         <a
-          [routerLink]="['/catalog']"
-          [queryParams]="{ category: 'electronique' }"
+          [routerLink]="['/promotions']"
           routerLinkActive="text-blue-600 font-semibold"
           [routerLinkActiveOptions]="{ exact: false }"
           class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
         >
-          Électronique
-          <span
-            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
-          ></span>
-        </a>
-
-        <a
-          [routerLink]="['/catalog']"
-          [queryParams]="{ category: 'gaming' }"
-          routerLinkActive="text-blue-600 font-semibold"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
-        >
-          Gaming
-          <span
-            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
-          ></span>
-        </a>
-        <a
-          [routerLink]="['/catalog']"
-          [queryParams]="{ category: 'audio' }"
-          routerLinkActive="text-blue-600 font-semibold"
-          [routerLinkActiveOptions]="{ exact: false }"
-          class="relative text-gray-800 font-medium hover:text-blue-600 transition-colors group"
-        >
-          Audio
+          Promotions
           <span
             class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"
           ></span>
         </a>
       </nav>
 
-      <!-- ACTIONS (recherche, panier, profil, menu mobile) -->
+      <!-- Recherche et Panier-->
       <div class="flex items-center gap-3">
         <button
           (click)="toggleSearch()"
@@ -100,7 +72,7 @@
           </span>
         </a>
 
-        <!-- 👤 Profil -->
+        <!-- Profil -->
         <button
           (click)="goToAccount()"
           class="hidden md:flex w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 items-center justify-center shadow-md transition-all overflow-hidden"
@@ -119,7 +91,7 @@
           </ng-template>
         </button>
 
-        <!-- Menu burger (mobile) -->
+        <!-- Menu burger Mobile -->
         <button
           (click)="toggleMenu()"
           class="lg:hidden w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -129,6 +101,7 @@
       </div>
     </div>
 
+    <!-- Recherche Mobile -->
     <div *ngIf="isSearchOpen" class="pb-4">
       <form (submit)="handleSearch($event)" class="flex gap-2">
         <input
@@ -168,32 +141,11 @@
         </li>
         <li>
           <a
-            [routerLink]="['/catalog']"
-            [queryParams]="{ category: 'electronique' }"
+            [routerLink]="['/promotions']"
             routerLinkActive="text-blue-600 font-semibold"
             [routerLinkActiveOptions]="{ exact: false }"
             class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
-            >Électronique</a
-          >
-        </li>
-        <li>
-          <a
-            [routerLink]="['/catalog']"
-            [queryParams]="{ category: 'gaming' }"
-            routerLinkActive="text-blue-600 font-semibold"
-            [routerLinkActiveOptions]="{ exact: false }"
-            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
-            >Gaming</a
-          >
-        </li>
-        <li>
-          <a
-            [routerLink]="['/catalog']"
-            [queryParams]="{ category: 'audio' }"
-            routerLinkActive="text-blue-600 font-semibold"
-            [routerLinkActiveOptions]="{ exact: false }"
-            class="block px-4 py-2 rounded-lg hover:bg-blue-50 text-gray-800 font-medium"
-            >Audio</a
+            >Promotions</a
           >
         </li>
         <button

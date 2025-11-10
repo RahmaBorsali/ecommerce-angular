@@ -19,4 +19,3 @@ export function luhnCheck(cardNumber: string): boolean {
   }
   return sum % 10 === 0;
 }
-

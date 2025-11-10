@@ -9,50 +9,49 @@ export type CartItem = {
 };
 
 export type CartMeta = {
-  shippingFee: number; // ex: 8
-  freeShippingThreshold: number; // ex: 10000
-  couponCode?: string; // 'SALE10' | 'FREESHIP' | ''
+  shippingFee: number; 
+  freeShippingThreshold: number;
+  couponCode?: string;
 };
 const CART_PREFIX = 'app.cart.';
 const META_PREFIX = 'app.cartmeta.';
-const GUEST_KEY  = 'app.guestId';
+const GUEST_KEY = 'app.guestId';
 @Injectable({ providedIn: 'root' })
 export class CartService {
-    private auth = inject(AuthService);
+  private auth = inject(AuthService);
 
-private get cartKey(): string {
-  return `${CART_PREFIX}${this.uid()}`;
-}
+  private get cartKey(): string {
+    return `${CART_PREFIX}${this.uid()}`;
+  }
 
-private get metaKey(): string {
-  return `${META_PREFIX}${this.uid()}`;
-}
-  
+  private get metaKey(): string {
+    return `${META_PREFIX}${this.uid()}`;
+  }
 
   private readonly defaultMeta: CartMeta = {
     shippingFee: 8,
     freeShippingThreshold: 8000,
     couponCode: '',
   };
-private uid(): string {
-  const u = this.auth.currentUser();
-  if (u?.id) return String(u.id);
-  // invité : id par session (onglet)
-  let gid = sessionStorage.getItem(GUEST_KEY);
-  if (!gid) {
-    gid = crypto.randomUUID();
-    sessionStorage.setItem(GUEST_KEY, gid);
+  private uid(): string {
+    const u = this.auth.currentUser();
+    if (u?.id) return String(u.id);
+    // invité : id par session (onglet)
+    let gid = sessionStorage.getItem(GUEST_KEY);
+    if (!gid) {
+      gid = crypto.randomUUID();
+      sessionStorage.setItem(GUEST_KEY, gid);
+    }
+    return `guest-${gid}`;
   }
-  return `guest-${gid}`;
-}
-
-
-
 
   // -------- Storage helpers ----------
   private read<T>(key: string, fallback: T): T {
-    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
-    catch { return fallback; }
+    try {
+      return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback;
+    } catch {
+      return fallback;
+    }
   }
   private write<T>(key: string, val: T) {
     localStorage.setItem(key, JSON.stringify(val));
