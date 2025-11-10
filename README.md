@@ -218,38 +218,38 @@ Voici un aperçu visuel de l’application **ElectroSpace** et de ses principale
 
 ### 🏠 Page d’accueil
 <p align="center">
-  <img src="./src/assets/caps/c1.png" alt="Page d'accueil" width="260">
-  <img src="./src/assets/caps/c2.png" alt="Page d'accueil 2" width="260">
-  <img src="./src/assets/caps/c3.png" alt="Page d'accueil 3" width="260">
+  <img src="./src/assets/caps/c1.png" alt="Page d'accueil" width="350">
+  <img src="./src/assets/caps/c2.png" alt="Page d'accueil 2" width="350">
+  <img src="./src/assets/caps/c3.png" alt="Page d'accueil 3" width="350">
 </p>
 
 
 
 ### 🛍️ Catalogue de produits
 <p align="center">
-  <img src="./src/assets/caps/c4.png" alt="Catalogue produits" width="260">
-  <img src="./src/assets/caps/c5.png" alt="Catalogue produits 2" width="260">
+  <img src="./src/assets/caps/c4.png" alt="Catalogue produits" width="350">
+  <img src="./src/assets/caps/c5.png" alt="Catalogue produits 2" width="350">
 </p>
 
 
 
 ### 🧾 Détail produit
 <p align="center">
-  <img src="./src/assets/caps/c10.png" alt="Détail produit " width="260">
-  <img src="./src/assets/caps/c11.png" alt="Détail produit " width="260">
-  <img src="./src/assets/caps/c12.png" alt="Détail produit " width="260">
+  <img src="./src/assets/caps/c10.png" alt="Détail produit " width="350">
+  <img src="./src/assets/caps/c11.png" alt="Détail produit " width="350">
+  <img src="./src/assets/caps/c12.png" alt="Détail produit " width="350">
 </p>
 
 ### 🪄 Promotions & Offres spéciales
 <p align="center">
-  <img src="./src/assets/caps/c13.png" alt="Page promotions 1" width="260">
+  <img src="./src/assets/caps/c13.png" alt="Page promotions 1" width="350">
 </p>
 
 
 
 ### 🛒 Panier d’achat
 <p align="center">
-  <img src="./src/assets/caps/c6.png" alt="Panier" width="260">
+  <img src="./src/assets/caps/c6.png" alt="Panier" width="350">
 </p>
 
 
@@ -260,24 +260,24 @@ Voici un aperçu visuel de l’application **ElectroSpace** et de ses principale
 
 ### 💳 Checkout & Confirmation
 <p align="center">
-  <img src="./src/assets/caps/c7.png" width="260">
-  <img src="./src/assets/caps/c8.png"  width="260">
-    <img src="./src/assets/caps/c9.png"  width="260">
+  <img src="./src/assets/caps/c7.png" width="350">
+  <img src="./src/assets/caps/c8.png"  width="350">
+    <img src="./src/assets/caps/c9.png"  width="350">
 
 </p>
 
 ### 🔐 Authentification (Inscription / Connexion)
 <p align="center">
-  <img src="./src/assets/caps/c19.png" alt="Connexion" width="260">
-  <img src="./src/assets/caps/c18.png" alt="Inscription" width="260">
+  <img src="./src/assets/caps/c19.png" alt="Connexion" width="350">
+  <img src="./src/assets/caps/c18.png" alt="Inscription" width="350">
 </p>
 
 ### 👤 Profil utilisateur
 <p align="center">
-  <img src="./src/assets/caps/c14.png" width="260">
-  <img src="./src/assets/caps/c15.png" width="260">
-  <img src="./src/assets/caps/c16.png" width="260">
-  <img src="./src/assets/caps/c17.png" width="260">
+  <img src="./src/assets/caps/c14.png" width="350">
+  <img src="./src/assets/caps/c15.png" width="350">
+  <img src="./src/assets/caps/c16.png" width="350">
+  <img src="./src/assets/caps/c17.png" width="350">
 </p>
 
 
