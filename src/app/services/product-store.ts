@@ -404,7 +404,7 @@ function applyCustomizations(p: Product): Product {
             comment: 'Autonomie correcte, charge très rapide.',
           },
         ],
-        images: [p.image, 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35ae?w=600'],
+        images: [p.image, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600'],
       };
     case 2: // Laptop Ultra 15
       return {

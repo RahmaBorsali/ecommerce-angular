@@ -29,7 +29,11 @@
               [class.ring-blue-600]="isActive(i)"
               [class.ring-transparent]="!isActive(i)"
             >
-              <img [src]="img" [alt]="'Aperçu ' + (i + 1)" class="w-full h-20 object-cover" />
+              <img
+                [src]="img"
+                [alt]="'Aperçu ' + (i + 1)"
+                class="w-24 h-30 object-cover mx-auto rounded-lg"
+              />
               <span
                 *ngIf="isActive(i)"
                 class="pointer-events-none absolute inset-0 ring-2 ring-blue-600 rounded-lg"
@@ -87,16 +91,14 @@
               Ajouter au panier
             </button>
             <button
-    type="button"
-    (click)="toggleFav()"
-    class="px-4 py-3 rounded-lg border hover:bg-rose-50 flex items-center gap-2"
-    [class.border-rose-300]="isFav"
-  >
-    <span [class.text-rose-600]="isFav">❤</span>
-    <span>{{ isFav ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
-  </button>
-
-
+              type="button"
+              (click)="toggleFav()"
+              class="px-4 py-3 rounded-lg border hover:bg-rose-50 flex items-center gap-2"
+              [class.border-rose-300]="isFav"
+            >
+              <span [class.text-rose-600]="isFav">❤</span>
+              <span>{{ isFav ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
+            </button>
           </div>
 
           <!-- Caractéristiques techniques -->
@@ -226,8 +228,9 @@
           <img
             [src]="s.image"
             [alt]="s.title"
-            class="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            class="h-56 w-39 object-cover mx-auto rounded-lg group-hover:scale-105 transition-transform duration-300"
           />
+
           <div class="p-3">
             <h3 class="text-sm font-semibold line-clamp-2">{{ s.title }}</h3>
             <div class="mt-2 text-blue-600 font-bold">{{ s.price | number : '1.2-2' }} DT</div>
