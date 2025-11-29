@@ -139,7 +139,7 @@ export class CatalogPage implements OnInit {
       // 1) Produits locaux
       const localProducts = this.store.getAll();
 
-      // 2) FakeStore via fetch (pas besoin d'HttpClient)
+      // 2) FakeStore via fetch
       const resp = await fetch('https://fakestoreapi.com/products');
       if (!resp.ok) throw new Error('FakeStore fetch failed');
       const fsItems = (await resp.json()) as FakeStoreItem[];
@@ -148,7 +148,6 @@ export class CatalogPage implements OnInit {
       // 3) Fusion
       const merged = [...localProducts, ...fsAdapted];
 
-      // 👇 AJOUTER CE BLOC
       for (const p of merged) {
         p.category = slugify(p.category);
       }
@@ -156,7 +155,6 @@ export class CatalogPage implements OnInit {
 
       this.products = merged;
 
-      // 4) Catégories dérivées du contenu réel (et limitées à ce que le site supporte)
 
       // Debug utile
       console.table([

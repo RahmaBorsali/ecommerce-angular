@@ -59,7 +59,7 @@ export class Profile implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  /** ✅ Sauvegarde du profil avec SweetAlert */
+  /**  Sauvegarde du profil avec SweetAlert */
   async save(): Promise<void> {
     if (!this.user()) return;
     if (this.form.invalid) {

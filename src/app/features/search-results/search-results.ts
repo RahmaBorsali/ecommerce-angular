@@ -24,10 +24,7 @@ export class SearchResults implements OnInit {
   allProducts: Product[] = [];
 
   ngOnInit(): void {
-    // Récupère toutes les données (adapte selon ton store)
-    this.allProducts = this.store.getAll?.() ?? []; // ou via signal/observable si besoin
-
-    // Écoute des paramètres de recherche
+    this.allProducts = this.store.getAll?.() ?? [];
     this.route.queryParamMap.subscribe((map) => {
       this.q = (map.get('q') || '').trim().toLowerCase();
       this.applySearch();

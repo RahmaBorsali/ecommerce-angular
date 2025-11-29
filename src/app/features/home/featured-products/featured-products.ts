@@ -80,10 +80,10 @@ export class FeaturedProducts {
   addToCart(product: Product) {
     this.cartSvc.addToCart({
       id: product.id,
-      name: product.title,      // 👈 le CartItems lit "name", pas "title"
+      name: product.title,
       price: product.price,
       image: product.image,
-      quantity: 1,        // 👈 important pour le compteur
+      quantity: 1,
     });
     Swal.fire({
       title: 'Ajouté au panier 🛒',

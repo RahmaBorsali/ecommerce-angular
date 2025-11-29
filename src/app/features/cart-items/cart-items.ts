@@ -1,7 +1,6 @@
-// src/app/features/cart/cart-items.component.ts
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink,Router } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { CartService, CartItem, CartMeta } from '../../services/cart.service';
 import { Header } from '../../shared/header/header';
@@ -17,7 +16,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class CartItems implements OnInit, OnDestroy {
   private auth = inject(AuthService);
-private router = inject(Router);
+  private router = inject(Router);
 
   Math = Math; // pour l’utilisation dans le template
   private cartSvc = inject(CartService);
@@ -152,29 +151,28 @@ private router = inject(Router);
     this.load();
   }
   async proceedToCheckout() {
-  const user = this.auth.currentUser();
+    const user = this.auth.currentUser();
 
-  if (!user) {
-    const res = await Swal.fire({
-      title: 'Connexion requise',
-      text: 'Veuillez vous connecter pour procéder au paiement 💙',
-      icon: 'info',
-      showCancelButton: true,
-      confirmButtonText: 'Se connecter',
-      cancelButtonText: 'Annuler',
-      confirmButtonColor: '#2563eb', // bleu
-      cancelButtonColor: '#6b7280', // gris
-    });
+    if (!user) {
+      const res = await Swal.fire({
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour procéder au paiement 💙',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Se connecter',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#2563eb', // bleu
+        cancelButtonColor: '#6b7280', // gris
+      });
 
-    if (res.isConfirmed) {
-      this.router.navigate(['/auth/signin']);
+      if (res.isConfirmed) {
+        this.router.navigate(['/auth/signin']);
+      }
+
+      return; //  Stop ici si non connecté
     }
 
-    return; // 🔥 Stop ici si non connecté
+    //  Si connecté → aller vers checkout
+    this.router.navigate(['/checkout']);
   }
-
-  // ✅ Si connecté → aller vers checkout
-  this.router.navigate(['/checkout']);
-}
-
 }

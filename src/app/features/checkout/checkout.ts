@@ -16,7 +16,7 @@ import { AuthService } from '../../services/auth.service'; // + import
   templateUrl: './checkout.html',
 })
 export class Checkout implements OnInit, OnDestroy {
-  private readonly auth = inject(AuthService); // 👈
+  private readonly auth = inject(AuthService);
 
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
@@ -124,94 +124,91 @@ export class Checkout implements OnInit, OnDestroy {
     this.method = m;
   }
 
-  // Optionnel: réinitialiser les formulaires quand on change de méthode
-  // (décommente si tu veux un reset à chaque switch)
   // if (m === 'card') { this.paypalForm.reset(); this.walletForm.reset(); }
   // if (m === 'paypal') { this.step2.reset(); this.walletForm.reset(); }
   // if (m === 'applepay' || m === 'googlepay') { this.step2.reset(); this.paypalForm.reset(); }
 
   async pay() {
-  if (this.step2.invalid) {
-    this.step2.markAllAsTouched();
+    if (this.step2.invalid) {
+      this.step2.markAllAsTouched();
+      Swal.fire({
+        icon: 'warning',
+        title: 'Informations de carte invalides',
+        text: 'Merci de vérifier vos informations bancaires.',
+      });
+      return;
+    }
+
+    this.loading = true;
+
     Swal.fire({
-      icon: 'warning',
-      title: 'Informations de carte invalides',
-      text: 'Merci de vérifier vos informations bancaires.',
+      title: 'Paiement en cours…',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+      showConfirmButton: false,
+      backdrop: true,
     });
-    return;
-  }
 
-  this.loading = true;
+    setTimeout(() => {
+      Swal.close();
 
-  Swal.fire({
-    title: 'Paiement en cours…',
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
-    showConfirmButton: false,
-    backdrop: true,
-  });
+      try {
+        const LS_ORDERS = 'app.orders';
+        const orders = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
 
-  setTimeout(() => {
-    Swal.close();
+        const number =
+          'ES-' +
+          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+          '-' +
+          String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
-    try {
-      const LS_ORDERS = 'app.orders';
-      const orders = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
+        const order = {
+          id: crypto.randomUUID(),
+          number,
+          date: new Date().toISOString(),
+          total: this.total,
+          status: 'processing',
+          userId: this.auth?.currentUser()?.id ?? null,
+          items: this.cart.map((it) => ({
+            title: it.name,
+            qty: it.quantity,
+            price: it.price,
+            image: it.image,
+          })),
+        };
 
-      const number =
+        orders.unshift(order);
+        localStorage.setItem(LS_ORDERS, JSON.stringify(orders));
+      } catch {}
+
+      this.cartSvc.clearCart();
+      this.cartSvc.setMeta({ couponCode: '' });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Commande confirmée ✅',
+        text: 'Merci pour votre achat !',
+      });
+
+      const orderNumber =
         'ES-' +
         new Date().toISOString().slice(0, 10).replace(/-/g, '') +
         '-' +
         String(Math.floor(Math.random() * 10000)).padStart(4, '0');
 
-      const order = {
-        id: crypto.randomUUID(),
-        number,
-        date: new Date().toISOString(),
-        total: this.total,
-        status: 'processing',
-        userId: this.auth?.currentUser()?.id ?? null,
-        items: this.cart.map((it) => ({
-          title: it.name,
-          qty: it.quantity,
-          price: it.price,
-          image: it.image,
-        })),
-      };
+      const eta = new Date();
+      eta.setDate(eta.getDate() + 7);
 
-      orders.unshift(order);
-      localStorage.setItem(LS_ORDERS, JSON.stringify(orders));
-    } catch {}
+      this.router.navigate(['/order/success'], {
+        state: {
+          orderNumber,
+          estimatedDelivery: eta.toISOString(),
+        },
+      });
 
-    this.cartSvc.clearCart();
-    this.cartSvc.setMeta({ couponCode: '' });
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Commande confirmée ✅',
-      text: 'Merci pour votre achat !',
-    });
-
-    // 🟩 ➜ ajoute ce bloc ICI (à la fin de pay())
-    const orderNumber =
-      'ES-' +
-      new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-      '-' +
-      String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-
-    const eta = new Date();
-    eta.setDate(eta.getDate() + 7);
-
-    this.router.navigate(['/order/success'], {
-      state: {
-        orderNumber,
-        estimatedDelivery: eta.toISOString(),
-      },
-    });
-
-    this.loading = false;
-  }, 1500);
-}
+      this.loading = false;
+    }, 1500);
+  }
 
   onImgError(ev: Event, item: CartItem) {
     const el = ev.target as HTMLImageElement;

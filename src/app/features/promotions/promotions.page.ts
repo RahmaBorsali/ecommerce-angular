@@ -22,7 +22,7 @@ type ProductPromo = Product & {
   styleUrl: './promotions.page.scss',
 })
 export class PromotionsPage implements OnInit {
-  Math=Math; // pour le template
+  Math = Math; // pour le template
   private title = inject(Title);
   private meta = inject(Meta);
   private store = inject(ProductStore);
@@ -33,15 +33,22 @@ export class PromotionsPage implements OnInit {
   promos: ProductPromo[] = [];
 
   ngOnInit(): void {
-    // SEO (équivalent aux meta du <head> côté React)
     this.title.setTitle('Promotions - ShopNow');
-    this.meta.updateTag({ name: 'description', content: 'Découvrez nos meilleures offres promotionnelles' });
+    this.meta.updateTag({
+      name: 'description',
+      content: 'Découvrez nos meilleures offres promotionnelles',
+    });
     this.meta.updateTag({ property: 'og:title', content: 'Promotions - ShopNow' });
-    this.meta.updateTag({ property: 'og:description', content: 'Découvrez nos meilleures offres promotionnelles' });
+    this.meta.updateTag({
+      property: 'og:description',
+      content: 'Découvrez nos meilleures offres promotionnelles',
+    });
     this.meta.updateTag({ name: 'twitter:title', content: 'Promotions - ShopNow' });
-    this.meta.updateTag({ name: 'twitter:description', content: 'Découvrez nos meilleures offres promotionnelles' });
+    this.meta.updateTag({
+      name: 'twitter:description',
+      content: 'Découvrez nos meilleures offres promotionnelles',
+    });
 
-    // “ErrorBoundary” light
     try {
       this.store.getAllMerged$().subscribe({
         next: (all) => {
@@ -51,7 +58,7 @@ export class PromotionsPage implements OnInit {
         error: (e) => {
           this.error = e || true;
           this.loading = false;
-        }
+        },
       });
     } catch (e) {
       this.error = e || true;
@@ -59,27 +66,29 @@ export class PromotionsPage implements OnInit {
     }
   }
 
-private selectPromotions(all: Product[]): ProductPromo[] {
-  const enriched: ProductPromo[] = (all || []).map(p => {
-    const cat = (p.category || '').toLowerCase();
-    const flagged = /audio|gaming|electronique|electronics/.test(cat);
+  private selectPromotions(all: Product[]): ProductPromo[] {
+    const enriched: ProductPromo[] = (all || []).map((p) => {
+      const cat = (p.category || '').toLowerCase();
+      const flagged = /audio|gaming|electronique|electronics/.test(cat);
 
-    // 🔸 Pourcentage aléatoire de réduction
-    const discountPercent = flagged ? [10, 15, 20, 25, 30][Math.floor(Math.random() * 5)] : undefined;
+      // 🔸 Pourcentage aléatoire de réduction
+      const discountPercent = flagged
+        ? [10, 15, 20, 25, 30][Math.floor(Math.random() * 5)]
+        : undefined;
 
-    // 🔸 Calcul des prix en DT
-    const oldPrice = p.price; // Prix initial
-    const promoPrice = discountPercent ? +(oldPrice * (1 - discountPercent / 100)).toFixed(2) : oldPrice;
+      // 🔸 Calcul des prix en DT
+      const oldPrice = p.price; // Prix initial
+      const promoPrice = discountPercent
+        ? +(oldPrice * (1 - discountPercent / 100)).toFixed(2)
+        : oldPrice;
 
-    return { ...p, oldPrice, price: promoPrice, discountPercent };
-  });
+      return { ...p, oldPrice, price: promoPrice, discountPercent };
+    });
 
-  const promos = enriched.filter(p => p.discountPercent);
-  promos.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
-  return promos.slice(0, 12);
-}
-
-
+    const promos = enriched.filter((p) => p.discountPercent);
+    promos.sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
+    return promos.slice(0, 12);
+  }
 
   addToCart(p: ProductPromo) {
     this.cart.addToCart({
@@ -87,21 +96,20 @@ private selectPromotions(all: Product[]): ProductPromo[] {
       name: p.title,
       price: p.price,
       image: p.image,
-      quantity: 1
+      quantity: 1,
     });
     Swal.fire({
-    icon: 'success',
-    title: 'Produit ajouté !',
-    text: `"${p.title}" a été ajouté à votre panier.`,
-    timer: 2000,
-    showConfirmButton: false,
-    position: 'top-end',
-    toast: true,
-  });
+      icon: 'success',
+      title: 'Produit ajouté !',
+      text: `"${p.title}" a été ajouté à votre panier.`,
+      timer: 2000,
+      showConfirmButton: false,
+      position: 'top-end',
+      toast: true,
+    });
   }
 
   reload() {
-    // version simple : recharger la page (même UX que l’ErrorBoundary React)
     location.reload();
   }
 }

@@ -9,7 +9,7 @@ export type FakeStoreItem = {
   title: string;
   price: number;
   description: string;
-  category: "electronics" | "jewelery" | "men's clothing" | "women's clothing";
+  category: 'electronics' | 'jewelery' | "men's clothing" | "women's clothing";
   image: string;
   rating?: { rate: number; count: number };
 };
@@ -27,6 +27,6 @@ export class FakeStore {
     return this.http.get<FakeStoreItem[]>(`${this.base}/products`);
   }
   getById(id: number) {
-  return this.http.get<any>(`${this.base}/products/${id}`);
-}
+    return this.http.get<any>(`${this.base}/products/${id}`);
+  }
 }

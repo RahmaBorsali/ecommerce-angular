@@ -1,4 +1,3 @@
-// src/app/features/checkout/order-success/order-success.ts
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';

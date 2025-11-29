@@ -22,7 +22,7 @@ export class CategoriesGrid {
     {
       name: 'Vêtements Homme',
       slug: "men's clothing",
-      image: '../../../../../assets/homme.jpg',
+      image: 'assets/homme.jpg',
       icon: 'shirt',
     },
     {
@@ -34,7 +34,7 @@ export class CategoriesGrid {
     {
       name: 'Bijoux',
       slug: 'jewelery',
-      image: '../../../../../assets/bijous.jpg',
+      image: 'assets/bijous.jpg',
       icon: 'gem',
     },
     {
@@ -46,7 +46,7 @@ export class CategoriesGrid {
     {
       name: 'Beauté & Soins',
       slug: 'beaute',
-      image: '../../../../../assets/beaute.avif',
+      image: 'assets/beaute.avif',
       icon: 'sparkles',
     },
   ];

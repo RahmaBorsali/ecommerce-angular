@@ -197,7 +197,7 @@ export class AccountLayout {
     localStorage.removeItem('app.session');
     window.dispatchEvent(new Event('authChanged'));
   } finally {
-    // 🔁 Redirige vers la page d’accueil
+    //  Redirige vers la page d’accueil
     this.router.navigateByUrl('/');
   }
 }

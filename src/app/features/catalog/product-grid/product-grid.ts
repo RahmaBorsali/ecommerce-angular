@@ -19,7 +19,6 @@ export class ProductGrid implements OnChanges {
   @Input() products: Product[] = [];
   @Input() categories: string[] = [];
 
-  // 👇👇 AJOUTER CETTE LIGNE
   @Input() initialCategory: string = '';
 
   // état filtres/tri
@@ -46,7 +45,7 @@ export class ProductGrid implements OnChanges {
       this.priceMax = this.maxPriceCeil;
     }
 
-    // 👇👇 Appliquer la catégorie initiale quand elle arrive du parent
+    // Appliquer la catégorie initiale quand elle arrive du parent
     if (changes['initialCategory']) {
       this.selectedCategory = this.initialCategory || '';
     }
