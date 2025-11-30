@@ -23,6 +23,7 @@ export const routes: Routes = [
   },
   {
     path: 'checkout',
+    canActivate: [authGuard],
     component: Checkout,
   },
   {
@@ -36,7 +37,6 @@ export const routes: Routes = [
 
   {
     path: 'account',
-    canActivate: [authGuard], // protège toutes les sous-pages
     loadComponent: () =>
       import('./features/account/account-layout/account-layout').then((m) => m.AccountLayout),
 
@@ -53,6 +53,8 @@ export const routes: Routes = [
       },
       {
         path: 'wishlist',
+                canActivate: [authGuard],
+
         loadComponent: () =>
           import('./features/account/account-wishlist/account-wishlist').then(
             (m) => m.AccountWishlist
@@ -68,6 +70,8 @@ export const routes: Routes = [
   { path: 'search', component: SearchResults },
   {
     path: 'order/success',
+        canActivate: [authGuard],
+
     loadComponent: () =>
       import('./features/order-success/order-success').then((m) => m.OrderSuccess),
   },
