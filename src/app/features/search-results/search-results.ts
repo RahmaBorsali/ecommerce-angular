@@ -2,10 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-// 🧰 Adapte ces imports à ton projet
-import { ProductStore, Product } from '../../services/product-store';
-import { Header } from "../../shared/header/header";
-import { Footer } from "../../shared/footer/footer";
+import { Header } from '../../shared/header/header';
+import { Footer } from '../../shared/footer/footer';
+import { ProductService, Product } from '../../services/product.service';
 
 @Component({
   standalone: true,
@@ -15,45 +14,78 @@ import { Footer } from "../../shared/footer/footer";
 })
 export class SearchResults implements OnInit {
   private route = inject(ActivatedRoute);
-  private store = inject(ProductStore);
+  private productSvc = inject(ProductService);
 
   q = '';
   products: Product[] = [];
   categories: string[] = [];
 
-  allProducts: Product[] = [];
+  loading = false;
+  error = '';
 
   ngOnInit(): void {
-    this.allProducts = this.store.getAll?.() ?? [];
     this.route.queryParamMap.subscribe((map) => {
-      this.q = (map.get('q') || '').trim().toLowerCase();
-      this.applySearch();
+      this.q = (map.get('q') || '').trim();
+      this.search();
     });
   }
 
-  private applySearch() {
+  private search() {
     if (!this.q) {
       this.products = [];
       this.categories = [];
+      this.loading = false;
+      this.error = '';
       return;
     }
 
-    const q = this.q;
+    this.loading = true;
+    this.error = '';
 
-    // Produits qui matchent (titre/description)
-    this.products = this.allProducts.filter((p) =>
-      (p.title || '').toLowerCase().includes(q) ||
-      (p.description || '').toLowerCase().includes(q) ||
-      (p.category || '').toLowerCase().includes(q)
-    );
+    this.productSvc.getProducts({ search: this.q }).subscribe({
+      next: (list) => {
+        this.products = list || [];
 
-    // Catégories candidates (d’après les produits)
-    const unique = new Set(
-      this.allProducts
-        .map((p) => (p.category || '').toLowerCase())
-        .filter(Boolean)
-    );
+        // Construire la liste de catégories à partir des produits retournés
+        const cats = this.products
+          .map((p) => {
+            if (typeof p.category === 'string') return p.category;
+            if (p.category && typeof p.category === 'object') {
+              return p.category.slug || p.category.name || '';
+            }
+            return '';
+          })
+          .filter(Boolean)
+          .map((c) => c.toLowerCase());
 
-    this.categories = Array.from(unique).filter((c) => c.includes(q));
+        this.categories = Array.from(new Set(cats));
+      },
+      error: () => {
+        this.error = 'Erreur lors de la recherche.';
+      },
+      complete: () => {
+        this.loading = false;
+      },
+    });
+  }
+
+  // ----- Helpers pour le template -----
+
+  getCategoryLabel(p: Product): string {
+    const cat = p.category;
+    if (!cat) return '';
+    if (typeof cat === 'string') return cat;
+    return cat.name || cat.slug || '';
+  }
+
+  getImage(p: Product): string {
+    if (p.images && p.images.length > 0) {
+      return p.images[0];
+    }
+    return 'assets/placeholder-product.jpg';
+  }
+
+  getDisplayPrice(p: Product): number {
+    return p.promoPrice ?? p.price;
   }
 }

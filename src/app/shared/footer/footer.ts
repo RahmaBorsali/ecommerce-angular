@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AuthService, User } from '../../services/auth.service';
-import { Component, OnDestroy, OnInit, inject, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService, User } from '../../services/auth.service';
 
 @Component({
   selector: 'app-footer',
@@ -10,19 +10,35 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
   templateUrl: './footer.html',
   styleUrl: './footer.scss',
 })
-export class Footer {
+export class Footer implements OnInit, OnDestroy {
   year = new Date().getFullYear();
+
   isLoggedIn = false;
   currentUser: User | null = null;
-  constructor(private router: Router) {}
+
   private auth = inject(AuthService);
+
+  constructor(private router: Router) {}
+
+  // 🔔 listener pour les changements d’auth
+  private onAuthChanged = () => this.refreshAuth();
+
+  ngOnInit(): void {
+    this.refreshAuth();
+    window.addEventListener('authChanged', this.onAuthChanged);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('authChanged', this.onAuthChanged);
+  }
 
   goToAccount(): void {
     this.refreshAuth();
     this.router.navigate([this.isLoggedIn ? '/account/profile' : '/auth/signin']);
   }
+
   private refreshAuth(): void {
-    this.isLoggedIn = this.auth.isLoggedIn();
     this.currentUser = this.auth.currentUser();
+    this.isLoggedIn = !!this.currentUser;
   }
 }

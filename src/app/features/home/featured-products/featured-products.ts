@@ -1,93 +1,69 @@
 import { CommonModule } from '@angular/common';
-import { Component,inject  } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
-type Product = {
-  id: number;
-  title: string;
-  price: number;
-  rating: number;
-  image: string;
-};
+
+import { CartService } from '../../../services/cart.service';
+import { ProductService, Product } from '../../../services/product.service';
+
 @Component({
   selector: 'app-featured-products',
+  standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './featured-products.html',
   styleUrl: './featured-products.scss',
 })
-export class FeaturedProducts {
+export class FeaturedProducts implements OnInit {
   private cartSvc = inject(CartService);
-  products: Product[] = [
-    {
-      id: 1,
-      title: 'Smartphone Pro X',
-      price: 2799,
-      rating: 4.5,
-      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600',
-    },
-    {
-      id: 2,
-      title: 'Laptop Ultra 15',
-      price: 4999,
-      rating: 4.8,
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600',
-    },
-    {
-      id: 3,
-      title: 'Casque Bluetooth Premium',
-      price: 459,
-      rating: 4.3,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600',
-    },
-    {
-      id: 4,
-      title: 'Console de Jeux Nouvelle Génération',
-      price: 2199,
-      rating: 4.7,
-      image: 'https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=600',
-    },
-    {
-      id: 5,
-      title: 'Écran 4K 27 pouces',
-      price: 1249,
-      rating: 4.6,
-      image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600',
-    },
-    {
-      id: 6,
-      title: 'Micro USB Streaming',
-      price: 349,
-      rating: 4.4,
-      image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600',
-    },
-    {
-      id: 7,
-      title: 'Lampe LED Smart',
-      price: 99,
-      rating: 4.2,
-      image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=600',
-    },
-    {
-      id: 8,
-      title: 'Écouteurs True Wireless',
-      price: 289,
-      rating: 4.5,
-      image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600',
-    },
-  ];
+  private productSvc = inject(ProductService);
+
+  products: Product[] = [];
+  loading = false;
+  error = '';
+
+  ngOnInit(): void {
+    this.loading = true;
+    this.error = '';
+
+    this.productSvc.getProducts({ featured: true }).subscribe({
+      next: (res) => {
+        // on peut limiter à 8 produits vedettes
+        this.products = (res || []).slice(0, 8);
+      },
+      error: () => {
+        this.error = 'Impossible de charger les produits vedettes.';
+      },
+      complete: () => {
+        this.loading = false;
+      },
+    });
+  }
+
+  // récupère l’image principale
+  getImage(product: Product): string {
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+    return 'assets/placeholder-product.jpg'; // image fallback si tu veux
+  }
+
+  // rating (optionnel)
+  getRating(product: Product): number {
+    return product.rating ?? 4.5; // par défaut une note sympa
+  }
 
   addToCart(product: Product) {
     this.cartSvc.addToCart({
-      id: product.id,
-      name: product.title,
-      price: product.price,
-      image: product.image,
+      id: product._id,                       // 👉 Mongo ID (string)
+      name: product.name,
+      price: product.promoPrice ?? product.price,
+      image: this.getImage(product),
       quantity: 1,
     });
+
     Swal.fire({
       title: 'Ajouté au panier 🛒',
-      text: `${product.title} a été ajouté avec succès.`,
+      text: `${product.name} a été ajouté avec succès.`,
       icon: 'success',
       confirmButtonText: 'OK',
       confirmButtonColor: '#2563eb',

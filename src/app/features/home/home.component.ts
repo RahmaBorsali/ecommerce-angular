@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ProductStore, Product } from '../../services/product-store';
+import { ActivatedRoute } from '@angular/router';
+import { ProductService, Product } from '../../services/product.service';
+
 @Component({
   selector: 'app-home',
   template: `
@@ -10,35 +10,59 @@ import { ProductStore, Product } from '../../services/product-store';
     <app-categories-grid></app-categories-grid>
     <app-featured-products></app-featured-products>
     <app-footer></app-footer>
-
-  ` ,
-  standalone : false
+  `,
+  standalone: false, // tu peux laisser comme ça si tu utilises un module
 })
-export class HomeComponent implements OnInit{
+export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private store = inject(ProductStore);
+  private productService = inject(ProductService);
 
   allProducts: Product[] = [];
+
+  // recherche & catégorie venant de l'URL
   q = signal('');
   category = signal('');
 
-  // liste filtrée pour la section “Résultats”
+  // liste filtrée (si tu veux l’utiliser sur la home ou plus tard)
   results = computed(() => {
     const query = this.q().toLowerCase();
     const cat = this.category().toLowerCase();
 
-    return this.allProducts.filter(p => {
-      const inCat = !cat || (p.category || '').toLowerCase().includes(cat);
-      const inText = !query
-        || (p.title || '').toLowerCase().includes(query)
-        || (p.description || '').toLowerCase().includes(query);
+    return this.allProducts.filter((p) => {
+      // cat peut venir de string ou d’objet { name, slug }
+      const catStr =
+        typeof p.category === 'string'
+          ? p.category.toLowerCase()
+          : (p.category?.slug || p.category?.name || '').toLowerCase();
+
+      const inCat = !cat || catStr.includes(cat);
+
+      const name = (p.name || '').toLowerCase();
+      const desc = (p.description || '').toLowerCase();
+
+      const inText =
+        !query ||
+        name.includes(query) ||
+        desc.includes(query);
+
       return inCat && inText;
     });
   });
 
   ngOnInit(): void {
-    this.allProducts = this.store.getAll(); // adapte si Observable
-    this.route.queryParamMap.subscribe(m => {
+    // 1) charger les produits depuis le backend
+    this.productService.getProducts().subscribe({
+      next: (prods) => {
+        this.allProducts = prods;
+      },
+      error: (err) => {
+        console.error('Erreur chargement produits home:', err);
+        this.allProducts = [];
+      },
+    });
+
+    // 2) écouter les query params ?q=...&category=...
+    this.route.queryParamMap.subscribe((m) => {
       this.q.set((m.get('q') || '').trim());
       this.category.set((m.get('category') || '').trim());
     });

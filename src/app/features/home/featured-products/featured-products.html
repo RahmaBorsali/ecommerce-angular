@@ -3,16 +3,25 @@
     Produits Vedettes
   </h2>
 
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+  <!-- loader / erreur -->
+  <div *ngIf="loading" class="text-center text-gray-500 py-8">
+    Chargement…
+  </div>
+
+  <div *ngIf="!loading && error" class="text-center text-red-500 py-8">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
     <article
       *ngFor="let p of products"
       class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-transform duration-300"
     >
       <!-- Image produit -->
-      <a [routerLink]="['/products', p.id]" class="block overflow-hidden relative">
+      <a [routerLink]="['/products', p._id]" class="block overflow-hidden relative">
         <img
-          [src]="p.image"
-          [alt]="p.title"
+          [src]="getImage(p)"
+          [alt]="p.name"
           class="h-48 w-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
       </a>
@@ -21,30 +30,28 @@
       <div class="p-4 space-y-3">
         <!-- Titre -->
         <h3 class="font-semibold text-sm md:text-base leading-tight">
-          <a [routerLink]="['/products', p.id]" class="hover:text-blue-600">
-            {{ p.title }}
+          <a [routerLink]="['/products', p._id]" class="hover:text-blue-600">
+            {{ p.name }}
           </a>
         </h3>
 
-        <!-- ⭐ Étoiles (orange ElectroSpace) -->
+        <!-- ⭐ Étoiles -->
         <div class="flex items-center gap-1 text-[#f97316] text-lg drop-shadow-sm">
-          <ng-container *ngFor="let s of starArray(p.rating)">
+          <ng-container *ngFor="let s of starArray(getRating(p))">
             <span>{{ s ? '★' : '☆' }}</span>
           </ng-container>
           <span class="text-gray-400 text-xs ml-1">
-            {{ p.rating | number: '1.1-1' }}
+            {{ getRating(p) | number: '1.1-1' }}
           </span>
         </div>
 
-        <!-- 💰 Prix + 🛒 Boutons -->
+        <!-- 💰 Prix + 🛒 -->
         <div class="flex items-center justify-between">
-          <!-- Prix -->
           <div class="text-lg font-extrabold text-[#2563eb]">
-            {{ p.price | number:'1.2-2' }}&nbsp;DT
+            {{ (p.promoPrice ?? p.price) | number:'1.2-2' }}&nbsp;DT
           </div>
 
           <div class="flex items-center gap-2">
-            <!-- Bouton panier (orange ElectroSpace) -->
             <button
               (click)="addToCart(p)"
               class="flex items-center justify-center rounded-full bg-[#f97316] hover:bg-[#ea580c] text-white w-9 h-9 shadow-sm transition"
@@ -53,9 +60,8 @@
               <i class="icon-shopping-cart text-base"></i>
             </button>
 
-            <!-- Bouton voir -->
             <a
-              [routerLink]="['/products', p.id]"
+              [routerLink]="['/products', p._id]"
               class="flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-500 w-9 h-9 transition"
               title="Voir le produit"
             >
@@ -66,7 +72,8 @@
       </div>
     </article>
   </div>
-<div class="flex justify-center mt-12">
+
+  <div class="flex justify-center mt-12" *ngIf="products.length">
     <a
       [routerLink]="'/catalog'"
       class="inline-flex items-center gap-2 px-6 py-3
@@ -76,10 +83,7 @@
              hover:scale-105 hover:gap-3
              transition-all duration-300 ease-out"
     >
-      <span>Voir tout les Produits</span>
+      <span>Voir tous les Produits</span>
     </a>
   </div>
-
-
-
 </section>

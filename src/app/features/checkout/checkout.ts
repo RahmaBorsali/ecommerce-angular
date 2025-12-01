@@ -8,6 +8,7 @@ import { Footer } from '../../shared/footer/footer';
 import { Header } from '../../shared/header/header';
 import { cardNumber } from '../../utils/card-number';
 import { AuthService } from '../../services/auth.service'; // + import
+import { OrderService } from '../../services/order.service';
 
 @Component({
   selector: 'app-checkout',
@@ -21,6 +22,7 @@ export class Checkout implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly cartSvc = inject(CartService);
+  private readonly orderSvc = inject(OrderService);
 
   step = 1;
   loading = false;
@@ -129,15 +131,67 @@ export class Checkout implements OnInit, OnDestroy {
   // if (m === 'applepay' || m === 'googlepay') { this.step2.reset(); this.paypalForm.reset(); }
 
   async pay() {
-    if (this.step2.invalid) {
-      this.step2.markAllAsTouched();
-      Swal.fire({
-        icon: 'warning',
-        title: 'Informations de carte invalides',
-        text: 'Merci de vérifier vos informations bancaires.',
-      });
-      return;
+    // 1) vérifier le mode de paiement selon la méthode choisie
+    if (this.method === 'card') {
+      if (this.step2.invalid) {
+        this.step2.markAllAsTouched();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Informations de carte invalides',
+          text: 'Merci de vérifier vos informations bancaires.',
+        });
+        return;
+      }
+    } else if (this.method === 'paypal') {
+      if (this.paypalForm.invalid) {
+        this.paypalForm.markAllAsTouched();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Email PayPal invalide',
+          text: 'Merci de vérifier votre email PayPal.',
+        });
+        return;
+      }
+    } else {
+      // applepay / googlepay
+      if (this.walletForm.invalid) {
+        this.walletForm.markAllAsTouched();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Informations incomplètes',
+          text: 'Merci de vérifier vos informations de paiement.',
+        });
+        return;
+      }
     }
+
+    // 2) Préparer le payload pour le backend
+    const user = this.auth.currentUser();
+
+    const items = this.cart.map((it) => ({
+      productId: it.id,
+      quantity: it.quantity,
+    }));
+
+    const s1 = this.step1.getRawValue();
+
+    const shippingAddress = {
+      firstName: s1.firstName!,
+      lastName: s1.lastName!,
+      address: s1.address!,
+      city: s1.city!,
+      postalCode: s1.postalCode!, // 👈 aligné avec le modèle backend
+      phone: s1.phone!,
+    };
+
+    const methodMap: Record<typeof this.method, 'CARD' | 'PAYPAL' | 'APPLEPAY' | 'GOOGLEPAY'> = {
+      card: 'CARD',
+      paypal: 'PAYPAL',
+      applepay: 'APPLEPAY',
+      googlepay: 'GOOGLEPAY',
+    };
+
+    const paymentMethod = methodMap[this.method];
 
     this.loading = true;
 
@@ -149,65 +203,59 @@ export class Checkout implements OnInit, OnDestroy {
       backdrop: true,
     });
 
-    setTimeout(() => {
-      Swal.close();
+    this.orderSvc
+      .createOrder({
+        userId: user?.id ?? null,
+        items,
+        couponCode: this.meta.couponCode,
+        shippingAddress,
+        paymentMethod,
+      })
+      .subscribe({
+        next: (order) => {
+          Swal.close();
 
-      try {
-        const LS_ORDERS = 'app.orders';
-        const orders = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
+          // vider panier + coupon
+          this.cartSvc.clearCart();
+          this.cartSvc.setMeta({ couponCode: '' });
 
-        const number =
-          'ES-' +
-          new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-          '-' +
-          String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+          Swal.fire({
+            icon: 'success',
+            title: 'Commande confirmée ✅',
+            text: 'Merci pour votre achat !',
+          });
 
-        const order = {
-          id: crypto.randomUUID(),
-          number,
-          date: new Date().toISOString(),
-          total: this.total,
-          status: 'processing',
-          userId: this.auth?.currentUser()?.id ?? null,
-          items: this.cart.map((it) => ({
-            title: it.name,
-            qty: it.quantity,
-            price: it.price,
-            image: it.image,
-          })),
-        };
+          // on génère un numéro "humain" pour la page de succès
+          const orderNumber =
+            'ES-' +
+            new Date(order.createdAt).toISOString().slice(0, 10).replace(/-/g, '') +
+            '-' +
+            order._id.slice(-4).toUpperCase();
 
-        orders.unshift(order);
-        localStorage.setItem(LS_ORDERS, JSON.stringify(orders));
-      } catch {}
+          const eta = new Date();
+          eta.setDate(eta.getDate() + 7);
 
-      this.cartSvc.clearCart();
-      this.cartSvc.setMeta({ couponCode: '' });
+          this.router.navigate(['/order/success'], {
+            state: {
+              orderNumber,
+              estimatedDelivery: eta.toISOString(),
+            },
+          });
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Commande confirmée ✅',
-        text: 'Merci pour votre achat !',
-      });
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('createOrder error', err);
+          Swal.close();
+          this.loading = false;
 
-      const orderNumber =
-        'ES-' +
-        new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-        '-' +
-        String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-
-      const eta = new Date();
-      eta.setDate(eta.getDate() + 7);
-
-      this.router.navigate(['/order/success'], {
-        state: {
-          orderNumber,
-          estimatedDelivery: eta.toISOString(),
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur de commande',
+            text: err?.error?.message || 'Impossible de créer la commande.',
+          });
         },
       });
-
-      this.loading = false;
-    }, 1500);
   }
 
   onImgError(ev: Event, item: CartItem) {

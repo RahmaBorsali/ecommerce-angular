@@ -10,49 +10,84 @@
     </button>
   </div>
 
-  <!-- Form -->
+  <!-- Formulaire ajout / édition -->
   <form
     *ngIf="editId()"
     [formGroup]="form"
-    class="rounded-2xl border bg-white p-4 lg:p-6 mb-6"
+    class="rounded-2xl border bg-white p-4 lg:p-6 mb-6 space-y-4"
   >
-    <div class="grid gap-4">
+    <div class="grid gap-4 md:grid-cols-2">
       <div>
-        <label class="text-sm">Nom complet</label>
-        <input class="w-full border rounded px-3 py-2" formControlName="fullName" />
+        <label class="text-sm font-medium mb-1 block">Libellé (Maison, Travail…)</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="label" />
       </div>
-
       <div>
-        <label class="text-sm">Adresse</label>
-        <input class="w-full border rounded px-3 py-2" formControlName="line1" />
+        <label class="text-sm font-medium mb-1 block">Téléphone *</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="phone" />
       </div>
-
-      <div>
-        <label class="text-sm">Ville</label>
-        <input class="w-full border rounded px-3 py-2" formControlName="city" />
-      </div>
-
-      <div>
-        <label class="text-sm">Pays</label>
-        <input class="w-full border rounded px-3 py-2" formControlName="country" />
-      </div>
-
-      <label class="flex items-center gap-2">
-        <input type="checkbox" formControlName="isDefault" class="h-4 w-4" />
-        Définir comme adresse par défaut
-      </label>
     </div>
 
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="text-sm font-medium mb-1 block">Prénom *</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="firstName" />
+      </div>
+      <div>
+        <label class="text-sm font-medium mb-1 block">Nom *</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="lastName" />
+      </div>
+    </div>
+
+    <div>
+      <label class="text-sm font-medium mb-1 block">Adresse *</label>
+      <input class="w-full border rounded px-3 py-2" formControlName="line1" />
+    </div>
+
+    <div>
+      <label class="text-sm font-medium mb-1 block">Complément d'adresse</label>
+      <input class="w-full border rounded px-3 py-2" formControlName="line2" />
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <div>
+        <label class="text-sm font-medium mb-1 block">Ville *</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="city" />
+      </div>
+      <div>
+        <label class="text-sm font-medium mb-1 block">Code postal *</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="postalCode" />
+      </div>
+      <div>
+        <label class="text-sm font-medium mb-1 block">Pays *</label>
+        <input class="w-full border rounded px-3 py-2" formControlName="country" />
+      </div>
+    </div>
+
+    <label class="flex items-center gap-2 mt-2">
+      <input type="checkbox" formControlName="isDefault" class="h-4 w-4" />
+      <span class="text-sm">Définir comme adresse par défaut</span>
+    </label>
+
     <div class="mt-4 flex gap-2">
-      <button (click)="save()" type="button" class="px-4 py-2 rounded-lg bg-blue-600 text-white">
+      <button
+        (click)="save()"
+        type="button"
+        class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+      >
         Enregistrer
       </button>
-      <button (click)="cancel()" type="button" class="px-4 py-2 rounded-lg border">Annuler</button>
+      <button
+        (click)="cancel()"
+        type="button"
+        class="px-4 py-2 rounded-lg border hover:bg-gray-50"
+      >
+        Annuler
+      </button>
     </div>
   </form>
 
-  <!-- Liste -->
-  <div *ngIf="addresses().length === 0" class="text-center p-10 rounded-xl border bg-white">
+  <!-- Liste vide -->
+  <div *ngIf="addresses().length === 0 && !editId()" class="text-center p-10 rounded-xl border bg-white">
     <div class="text-5xl mb-2">🏠</div>
     <p class="font-medium">Aucune adresse enregistrée.</p>
     <button (click)="startAdd()" class="mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white">
@@ -60,43 +95,54 @@
     </button>
   </div>
 
-  <div class="grid sm:grid-cols-2 gap-4">
+  <!-- Liste des adresses -->
+  <div class="grid sm:grid-cols-2 gap-4" *ngIf="addresses().length">
     <div *ngFor="let a of addresses()" class="rounded-2xl border bg-white p-4 lg:p-6">
       <div class="flex items-start justify-between gap-3">
         <div>
-          <div class="font-semibold">{{ a.fullName }}</div>
+          <div class="font-semibold">
+            {{ a.firstName }} {{ a.lastName }}
+          </div>
+          <div *ngIf="a.label" class="text-xs text-gray-500">
+            {{ a.label }}
+          </div>
         </div>
         <span
           *ngIf="a.isDefault"
           class="text-xs rounded-full px-2 py-1 bg-emerald-100 text-emerald-800"
-          >Par défaut</span
         >
+          Par défaut
+        </span>
       </div>
-      <div class="mt-2 text-gray-700">
-        {{ a.line1 }}<span *ngIf="a.city">, {{ a.city }}</span><br />
-        <span *ngIf="a.country">{{ a.country }}</span>
+
+      <div class="mt-2 text-gray-700 text-sm">
+        {{ a.line1 }}<span *ngIf="a.line2">, {{ a.line2 }}</span><br />
+        {{ a.postalCode }} {{ a.city }}<br />
+        <span *ngIf="a.country">{{ a.country }}</span><br />
+        <span class="block mt-1 text-gray-600">📞 {{ a.phone }}</span>
       </div>
+
       <div class="mt-4 flex flex-wrap gap-2">
         <button
-        (click)="startEdit(a)"
-        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-all duration-200"
-      >
-        <i class="icon-edit text-sm"></i>
-        <span>Modifier</span>
-      </button>
+          (click)="startEdit(a)"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-600 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-all duration-200"
+        >
+          <i class="icon-edit text-sm"></i>
+          <span>Modifier</span>
+        </button>
 
-      <!-- 🟥 Bouton Supprimer -->
-      <button
-        (click)="remove(a)"
-        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all duration-200"
-      >
-        <i class="icon-trash text-sm"></i>
-        <span>Supprimer</span>
-      </button>
+        <button
+          (click)="remove(a)"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all duration-200"
+        >
+          <i class="icon-trash text-sm"></i>
+          <span>Supprimer</span>
+        </button>
+
         <button
           *ngIf="!a.isDefault"
           (click)="setDefault(a)"
-          class="px-3 py-1.5 rounded-lg bg-blue-600 text-white"
+          class="px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
         >
           Par défaut
         </button>

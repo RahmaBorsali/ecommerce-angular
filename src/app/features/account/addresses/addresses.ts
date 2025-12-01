@@ -3,18 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../../services/auth.service';
-
-type Address = {
-  id: string;
-  userId: string;   // 🔑 propriétaire de l’adresse
-  fullName: string;
-  line1: string;
-  city?: string;
-  country?: string;
-  isDefault?: boolean;
-};
-
-const LS_ADDR = 'app.addresses';
+import { AddressService, Address, CreateAddressDto } from '../../../services/address.service';
 
 @Component({
   standalone: true,
@@ -25,54 +14,76 @@ const LS_ADDR = 'app.addresses';
 export class AccountAddresses implements OnInit {
   private fb   = inject(FormBuilder);
   private auth = inject(AuthService);
+  private addrSvc = inject(AddressService);
 
   addresses = signal<Address[]>([]);
-  editId    = signal<string | null>(null);
+  editId    = signal<string | null>(null); // 'new' ou _id Mongo
 
-  // Champs simples : nom + adresse requis, ville/pays facultatifs, "par défaut" optionnel
   form = this.fb.group({
-    fullName: ['', [Validators.required, Validators.minLength(2)]],
-    line1:    ['', [Validators.required, Validators.minLength(4)]],
-    city:     [''],
-    country:  ['Tunisie'],
-    isDefault:['' as any] // booléen; si tu veux: [false]
+    label:      ['Maison'],
+    firstName:  ['', [Validators.required, Validators.minLength(2)]],
+    lastName:   ['', [Validators.required, Validators.minLength(2)]],
+    phone:      ['', [Validators.required, Validators.minLength(6)]],
+    line1:      ['', [Validators.required, Validators.minLength(4)]],
+    line2:      [''],
+    city:       ['', [Validators.required]],
+    postalCode: ['', [Validators.required]],
+    country:    ['Tunisie', [Validators.required]],
+    isDefault:  [false],
   });
 
   ngOnInit(): void {
-    this.refreshList();
+    this.loadAddresses();
   }
 
-  /** Recharge les adresses du user connecté */
-  private refreshList(): void {
+  private loadAddresses(): void {
     const user = this.auth.currentUser();
-    if (!user) {
+    if (!user?.id) {
       this.addresses.set([]);
       return;
     }
-    const all: Address[] = JSON.parse(localStorage.getItem(LS_ADDR) || '[]');
-    this.addresses.set(all.filter(a => a.userId === user.id));
+
+    this.addrSvc.getByUser(user.id).subscribe({
+      next: (list) => this.addresses.set(list || []),
+      error: (err) => {
+        console.error('getByUser error', err);
+        this.addresses.set([]);
+      },
+    });
   }
 
   startAdd(): void {
     const user = this.auth.currentUser();
+    if (!user?.id) return;
+
     this.editId.set('new');
     this.form.reset({
-      fullName: user ? `${user.firstName} ${user.lastName ?? ''}`.trim() : '',
+      label: 'Maison',
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      phone: '',
       line1: '',
+      line2: '',
       city: '',
+      postalCode: '',
       country: 'Tunisie',
-      isDefault: false as any
+      isDefault: this.addresses().length === 0, // première adresse => par défaut
     });
   }
 
   startEdit(a: Address): void {
-    this.editId.set(a.id);
+    this.editId.set(a._id);
     this.form.reset({
-      fullName: a.fullName,
+      label: a.label || 'Adresse',
+      firstName: a.firstName,
+      lastName: a.lastName,
+      phone: a.phone,
       line1: a.line1,
-      city: a.city ?? '',
-      country: a.country ?? 'Tunisie',
-      isDefault: !!a.isDefault as any
+      line2: a.line2 || '',
+      city: a.city,
+      postalCode: a.postalCode,
+      country: a.country || 'Tunisie',
+      isDefault: !!a.isDefault,
     });
   }
 
@@ -80,7 +91,6 @@ export class AccountAddresses implements OnInit {
     this.editId.set(null);
   }
 
-  /** Sauvegarde avec confirmation SweetAlert */
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -88,9 +98,9 @@ export class AccountAddresses implements OnInit {
     }
 
     const user = this.auth.currentUser();
-    if (!user) return;
+    if (!user?.id) return;
 
-    const result = await Swal.fire({
+    const confirm = await Swal.fire({
       title: 'Confirmer la sauvegarde',
       text: 'Voulez-vous enregistrer cette adresse ?',
       icon: 'question',
@@ -101,63 +111,66 @@ export class AccountAddresses implements OnInit {
       cancelButtonText: 'Annuler',
     });
 
-    if (!result.isConfirmed) return;
+    if (!confirm.isConfirmed) return;
 
-    // On isole les champs saisis pour éviter les doublons id/userId
     const raw = this.form.getRawValue();
-    const value = {
-      fullName: (raw.fullName ?? '').trim(),
-      line1:    (raw.line1 ?? '').trim(),
-      city:     (raw.city ?? '').trim() || undefined,
-      country:  (raw.country ?? '').trim() || undefined,
+    const dto: CreateAddressDto = {
+      userId: user.id,
+      label: raw.label || undefined,
+      firstName: raw.firstName!.trim(),
+      lastName: raw.lastName!.trim(),
+      phone: raw.phone!.trim(),
+      line1: raw.line1!.trim(),
+      line2: raw.line2?.trim() || undefined,
+      city: raw.city!.trim(),
+      postalCode: raw.postalCode!.trim(),
+      country: (raw.country || 'Tunisie').trim(),
       isDefault: !!raw.isDefault,
     };
 
-    // Lecture globale
-    const all: Address[] = JSON.parse(localStorage.getItem(LS_ADDR) || '[]');
-    // Sous-ensemble du user
-    let mine = all.filter(a => a.userId === user.id);
+    const isNew = this.editId() === 'new';
+    const id = this.editId();
 
-    if (this.editId() === 'new') {
-      const newAddr: Address = {
-        id: crypto.randomUUID(),
-        userId: user.id,
-        ...value,
-      };
-      if (newAddr.isDefault) {
-        mine = mine.map(a => ({ ...a, isDefault: false }));
-      }
-      mine.unshift(newAddr);
-    } else {
-      const idx = mine.findIndex(a => a.id === this.editId());
-      if (idx >= 0) {
-        if (value.isDefault) {
-          mine = mine.map(a => ({ ...a, isDefault: a.id === this.editId() }));
-        }
-        // ⚠️ pas de réécriture de id/userId
-        mine[idx] = { ...mine[idx], ...value };
-      }
-    }
+    const req$ = isNew
+      ? this.addrSvc.create(dto)
+      : this.addrSvc.update(id as string, {
+          label: dto.label,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          phone: dto.phone,
+          line1: dto.line1,
+          line2: dto.line2,
+          city: dto.city,
+          postalCode: dto.postalCode,
+          country: dto.country,
+          isDefault: dto.isDefault,
+        });
 
-    // Réassemble tout (mes adresses modifiées + celles des autres users)
-    const others = all.filter(a => a.userId !== user.id);
-    localStorage.setItem(LS_ADDR, JSON.stringify([...others, ...mine]));
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Enregistré',
-      text: 'Votre adresse a été sauvegardée.',
-      timer: 1400,
-      showConfirmButton: false,
+    req$.subscribe({
+      next: async () => {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Enregistré',
+          text: 'Votre adresse a été sauvegardée.',
+          timer: 1400,
+          showConfirmButton: false,
+        });
+        this.loadAddresses();
+        this.cancel();
+      },
+      error: async (err) => {
+        console.error('save address error', err);
+        await Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: "Impossible d'enregistrer l'adresse.",
+        });
+      },
     });
-
-    this.refreshList();
-    this.cancel();
   }
 
-  /** Suppression avec confirmation SweetAlert */
   async remove(a: Address): Promise<void> {
-    const result = await Swal.fire({
+    const confirm = await Swal.fire({
       title: 'Supprimer cette adresse ?',
       text: 'Cette action est irréversible.',
       icon: 'warning',
@@ -168,35 +181,34 @@ export class AccountAddresses implements OnInit {
       cancelButtonText: 'Annuler',
     });
 
-    if (!result.isConfirmed) return;
+    if (!confirm.isConfirmed) return;
 
-    const user = this.auth.currentUser();
-    if (!user) return;
-
-    const all: Address[] = JSON.parse(localStorage.getItem(LS_ADDR) || '[]');
-    const next = all.filter(x => !(x.userId === user.id && x.id === a.id));
-    localStorage.setItem(LS_ADDR, JSON.stringify(next));
-
-    this.refreshList();
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Supprimée',
-      text: 'Adresse supprimée avec succès.',
-      timer: 1200,
-      showConfirmButton: false,
+    this.addrSvc.delete(a._id).subscribe({
+      next: async () => {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Supprimée',
+          text: 'Adresse supprimée avec succès.',
+          timer: 1200,
+          showConfirmButton: false,
+        });
+        this.loadAddresses();
+      },
+      error: async (err) => {
+        console.error('delete address error', err);
+        await Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: "Impossible de supprimer l'adresse.",
+        });
+      },
     });
   }
 
   setDefault(a: Address): void {
-    const user = this.auth.currentUser();
-    if (!user) return;
-
-    const all: Address[] = JSON.parse(localStorage.getItem(LS_ADDR) || '[]');
-    const next = all.map(x =>
-      x.userId === user.id ? { ...x, isDefault: x.id === a.id } : x
-    );
-    localStorage.setItem(LS_ADDR, JSON.stringify(next));
-    this.refreshList();
+    this.addrSvc.setDefault(a._id).subscribe({
+      next: () => this.loadAddresses(),
+      error: (err) => console.error('setDefault error', err),
+    });
   }
 }

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { CartService } from '../../../services/cart.service';   // ✅ ajouter ça
+import { WishlistService } from '../../../services/wishlist.service';
 
 @Component({
   standalone: true,
@@ -14,6 +16,8 @@ export class Signin {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private cart = inject(CartService);   // ✅ injecter le CartService
+  private wishlist = inject(WishlistService);
 
   error = '';
   loading = false;
@@ -58,10 +62,9 @@ export class Signin {
     this.loading = true;
     this.form.disable();
 
-    //  APPEL AU BACKEND
     this.auth.login(email, password).subscribe({
-      next: (res) => {
-        // remember me
+      next: (res) => { 
+        // ✅ gérer le remember me
         if (remember) {
           localStorage.setItem(
             'remember.login',
@@ -71,6 +74,11 @@ export class Signin {
           localStorage.removeItem('remember.login');
         }
 
+        // ✅ fusionner le panier invité avec le panier user
+        this.cart.migrateGuestCartToUser();
+        this.wishlist.syncFromServer();
+
+        // ✅ redirection
         this.router.navigateByUrl('/home');
       },
       error: (err) => {

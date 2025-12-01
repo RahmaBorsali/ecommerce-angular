@@ -1,28 +1,44 @@
-import { Component, OnInit, signal } from '@angular/core';
+// src/app/features/account/account-wishlist/account-wishlist.ts
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { WishlistService, WishItem } from '../../../services/wishlist.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   standalone: true,
   selector: 'app-account-wishlist',
   imports: [CommonModule, RouterLink],
-  templateUrl: './account-wishlist.html'
+  templateUrl: './account-wishlist.html',
 })
-export class AccountWishlist implements OnInit {
+export class AccountWishlist implements OnInit, OnDestroy {
   items = signal<WishItem[]>([]);
 
-  constructor(private wl: WishlistService) {}
+  private wl = inject(WishlistService);
+  private auth = inject(AuthService);
+
+  // flèche = this toujours lié
+  private reload = () => this.items.set(this.wl.list());
 
   ngOnInit(): void {
+    const user = this.auth.currentUser();
+
+    // 🔁 si connecté → on charge depuis la BD et on sync le localStorage
+    if (user?.id) {
+      this.wl.syncFromServer();
+    }
+
+    // puis on lit le local (qui vient d’être sync)
     this.reload();
+
+    // écoute les mises à jour (toggle depuis fiche produit, etc.)
     window.addEventListener('wishlistUpdated', this.reload as EventListener);
   }
+
   ngOnDestroy(): void {
     window.removeEventListener('wishlistUpdated', this.reload as EventListener);
   }
-  private reload = () => this.items.set(this.wl.list());
 
   async remove(it: WishItem) {
     const res = await Swal.fire({
@@ -32,12 +48,20 @@ export class AccountWishlist implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Oui, retirer',
       cancelButtonText: 'Annuler',
-      confirmButtonColor: '#dc2626', // rouge
+      confirmButtonColor: '#dc2626',
     });
+
     if (res.isConfirmed) {
-      this.wl.remove(it.id);
+      await this.wl.remove(it.id); // 🔁 enlève local + BD si connecté
       this.reload();
-      Swal.fire({ toast: true, position: 'top-end', timer: 1200, showConfirmButton: false, icon: 'success', title: 'Retiré des favoris' });
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        timer: 1200,
+        showConfirmButton: false,
+        icon: 'success',
+        title: 'Retiré des favoris',
+      });
     }
   }
 
@@ -49,12 +73,20 @@ export class AccountWishlist implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Oui, tout effacer',
       cancelButtonText: 'Annuler',
-      confirmButtonColor: '#dc2626', // rouge
+      confirmButtonColor: '#dc2626',
     });
+
     if (res.isConfirmed) {
-      this.wl.clearAll();
+      this.wl.clearAll(); // 🟦 vide front + backend
       this.reload();
-      Swal.fire({ toast: true, position: 'top-end', timer: 1200, showConfirmButton: false, icon: 'success', title: 'Favoris vidés' });
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        timer: 1200,
+        showConfirmButton: false,
+        icon: 'success',
+        title: 'Favoris vidés',
+      });
     }
   }
 }

@@ -1,4 +1,5 @@
 <app-header></app-header>
+
 <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
   <!-- En-tête -->
   <header class="mb-6">
@@ -8,18 +9,29 @@
         Résultats pour « <b>{{ q }}</b> »
         — {{ products.length }} produit(s), {{ categories.length }} catégorie(s)
       </ng-container>
-      <ng-template #noQuery> Tapez un mot-clé pour rechercher dans tout le site. </ng-template>
+      <ng-template #noQuery>
+        Tapez un mot-clé pour rechercher dans tout le site.
+      </ng-template>
     </p>
   </header>
 
+  <!-- Loader / erreur -->
+  <div *ngIf="loading" class="p-10 text-center rounded-xl border bg-white text-gray-500">
+    Chargement…
+  </div>
+
+  <div *ngIf="!loading && error" class="p-10 text-center rounded-xl border bg-white text-red-500">
+    {{ error }}
+  </div>
+
   <!-- Rien tapé -->
-  <div *ngIf="!q" class="p-10 text-center rounded-xl border bg-white">
+  <div *ngIf="!loading && !error && !q" class="p-10 text-center rounded-xl border bg-white">
     <div class="text-5xl mb-2">🔎</div>
     <p class="font-medium">Recherchez des produits, des catégories…</p>
     <p class="text-gray-500">Exemples : « iphone », « casque », « gaming »…</p>
   </div>
 
-  <ng-container *ngIf="q">
+  <ng-container *ngIf="!loading && !error && q">
     <!-- Catégories correspondantes -->
     <div class="mb-6" *ngIf="categories.length">
       <h2 class="text-lg font-semibold mb-3">Catégories</h2>
@@ -36,16 +48,29 @@
     </div>
 
     <!-- Produits -->
-    <div *ngIf="products.length; else noResults" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div
+      *ngIf="products.length; else noResults"
+      class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    >
       <a
         *ngFor="let p of products"
-        [routerLink]="['/products', p.id]"
+        [routerLink]="['/products', p._id]"
         class="block bg-white rounded-xl border p-4 hover:shadow-md transition"
       >
-        <img [src]="p.image" [alt]="p.title" class="w-full h-44 object-cover rounded-lg mb-3" />
-        <div class="font-semibold line-clamp-2">{{ p.title }}</div>
-        <div class="text-sm text-gray-500 capitalize">{{ p.category }}</div>
-        <div class="mt-2 font-bold">{{ p.price | currency:'EUR' }}</div>
+        <img
+          [src]="getImage(p)"
+          [alt]="p.name"
+          class="w-full h-44 object-cover rounded-lg mb-3"
+        />
+        <div class="font-semibold line-clamp-2">
+          {{ p.name }}
+        </div>
+        <div class="text-sm text-gray-500 capitalize">
+          {{ getCategoryLabel(p) }}
+        </div>
+        <div class="mt-2 font-bold">
+          {{ getDisplayPrice(p) | number:'1.2-2' }}&nbsp;DT
+        </div>
       </a>
     </div>
 
@@ -53,9 +78,12 @@
       <div class="p-10 text-center rounded-xl border bg-white">
         <div class="text-5xl mb-2">🙈</div>
         <p class="font-medium">Aucun résultat trouvé pour « {{ q }} ».</p>
-        <p class="text-gray-500">Astuce : essayez un autre terme ou une catégorie plus large.</p>
+        <p class="text-gray-500">
+          Astuce : essayez un autre terme ou une catégorie plus large.
+        </p>
       </div>
     </ng-template>
   </ng-container>
 </section>
+
 <app-footer></app-footer>

@@ -21,16 +21,19 @@ export class Header implements OnInit, OnDestroy {
   avatarUrl: string | null = null;
 
   private el = inject(ElementRef);
+  private auth = inject(AuthService);
 
   currentUser: User | null = null;
+
   constructor(private router: Router) {}
-  private auth = inject(AuthService);
+
   private onAuthChanged = () => this.refreshAuth();
   private onCartEvents = () => this.updateCartCount();
 
   ngOnInit(): void {
     this.updateCartCount();
     this.refreshAuth();
+
     window.addEventListener('authChanged', this.onAuthChanged);
     window.addEventListener('cartUpdated', this.onCartEvents as EventListener);
   }
@@ -41,32 +44,8 @@ export class Header implements OnInit, OnDestroy {
   }
 
   goToAccount(): void {
-    this.refreshAuth(); // rafraîchit
+    this.refreshAuth(); // on s’assure d’avoir l’état à jour
     this.router.navigate([this.isLoggedIn ? '/account/profile' : '/auth/signin']);
-  }
-
-  // récupère l’utilisateur courant selon les clés courantes
-  private getCurrentUser(): { id: string | number; email: string; avatarUrl?: string } | null {
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]') as any[];
-      const id = localStorage.getItem('authUserId');
-      if (id && Array.isArray(users) && users.length) {
-        const byId = users.find((u) => String(u.id) === String(id));
-        if (byId) return byId;
-      }
-      const authUserRaw = localStorage.getItem('authUser');
-      if (authUserRaw) {
-        const authUser = JSON.parse(authUserRaw);
-        if (Array.isArray(users) && users.length) {
-          const fromList = users.find((u) => String(u.id) === String(authUser.id));
-          return { ...fromList, ...authUser };
-        }
-        return authUser;
-      }
-      return null;
-    } catch {
-      return null;
-    }
   }
 
   toggleMenu(): void {
@@ -76,7 +55,6 @@ export class Header implements OnInit, OnDestroy {
   toggleSearch() {
     this.isSearchOpen = !this.isSearchOpen;
     if (this.isSearchOpen) {
-      // focus après rendu
       setTimeout(() => {
         const input: HTMLInputElement | null =
           this.el.nativeElement.querySelector('#global-search');
@@ -89,6 +67,7 @@ export class Header implements OnInit, OnDestroy {
   closeSearch() {
     this.isSearchOpen = false;
   }
+
   handleSearch(ev?: Event) {
     ev?.preventDefault();
     const q = (this.searchQuery || '').trim();
@@ -110,11 +89,11 @@ export class Header implements OnInit, OnDestroy {
       const user = this.auth.currentUser();
       let uid: string;
 
-      // Utilisateur connecté ?
       if (user?.id) {
+        // user connecté
         uid = String(user.id);
       } else {
-        // Invité
+        // invité
         let gid = sessionStorage.getItem('app.guestId');
         if (!gid) {
           gid = crypto.randomUUID();
@@ -123,11 +102,8 @@ export class Header implements OnInit, OnDestroy {
         uid = `guest-${gid}`;
       }
 
-      // Lecture du panier
       const raw = localStorage.getItem(`app.cart.${uid}`);
       const items: any[] = raw ? JSON.parse(raw) : [];
-
-      // Somme des quantités
       this.cartCount = items.reduce((sum, it: any) => sum + (Number(it.quantity) || 1), 0);
     } catch {
       this.cartCount = 0;
@@ -137,12 +113,10 @@ export class Header implements OnInit, OnDestroy {
   private buildAvatarUrl(u: User | null): string | null {
     if (!u) return null;
 
-    // Priorité à l’avatar stocké (profile)
     if ((u as any).avatarUrl && String((u as any).avatarUrl).trim()) {
       return String((u as any).avatarUrl).trim();
     }
 
-    // Fallback: avatar initiales via ui-avatars
     const first = (u as any).firstName ?? '';
     const last = (u as any).lastName ?? '';
     const name = encodeURIComponent(`${first || ''} ${last || ''}`.trim() || 'User');
@@ -150,8 +124,8 @@ export class Header implements OnInit, OnDestroy {
   }
 
   private refreshAuth(): void {
-    this.isLoggedIn = this.auth.isLoggedIn();
     this.currentUser = this.auth.currentUser();
+    this.isLoggedIn = !!this.currentUser;
     this.avatarUrl = this.buildAvatarUrl(this.currentUser);
   }
 }

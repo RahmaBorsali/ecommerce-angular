@@ -1,59 +1,130 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import Swal from 'sweetalert2';
-import { AuthService } from '../../../services/auth.service';
 import { RouterLink } from '@angular/router';
-type Order = {
+import Swal from 'sweetalert2';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../../services/auth.service';
+
+// ---- Types venant du backend ----
+type BackendOrderItem = {
+  product: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+type BackendOrder = {
+  _id: string;
+  user?: string;
+  items: BackendOrderItem[];
+  subtotal: number;
+  discount: number;
+  shippingCost: number;
+  total: number;
+  couponCode?: string;
+  shippingAddress?: any;
+  paymentMethod: 'CARD' | 'PAYPAL' | 'APPLEPAY' | 'GOOGLEPAY';
+  paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
+  status: 'NEW' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+};
+
+// ---- ViewModel utilisé par le template ----
+type OrderStatus = 'new' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+type OrderVM = {
   id: string;
   number: string;
   date: string;
   total: number;
-  status: 'paid'|'processing'|'shipped'|'delivered'|'cancelled';
-  userId: string|null;
-  payment?: { method: 'card'|'paypal'|'applepay'|'googlepay'; last4?: string|null };
-  items: { title:string; qty:number; price:number; image?:string }[];
+  status: OrderStatus;
+  paymentMethod: 'card' | 'paypal' | 'applepay' | 'googlepay';
+  items: { title: string; qty: number; price: number }[];
 };
-
-const LS_ORDERS = 'app.orders';
 
 @Component({
   standalone: true,
   selector: 'app-account-orders',
   imports: [CommonModule, RouterLink],
-  templateUrl: './orders.html'
+  templateUrl: './orders.html',
 })
 export class AccountOrders implements OnInit {
   private auth = inject(AuthService);
+  private http = inject(HttpClient);
 
-  orders = signal<Order[]>([]);
-  filter = signal<'all' | Order['status']>('all');
+  private apiUrl = 'http://localhost:3000';
+
+  orders = signal<OrderVM[]>([]);
+  filter = signal<'all' | OrderStatus>('all');
+  loading = signal<boolean>(false);
 
   ngOnInit(): void {
-    const all: Order[] = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
     const me = this.auth.currentUser();
-    const mine = me ? all.filter(o => o.userId === me.id) : all.filter(o => o.userId == null);
-    mine.sort((a,b) => (b.date > a.date ? 1 : -1));
-    this.orders.set(mine);
+    if (!me?.id) {
+      this.orders.set([]);
+      return;
+    }
+
+    this.loading.set(true);
+
+    this.http
+      .get<BackendOrder[]>(`${this.apiUrl}/orders/user/${me.id}`)
+      .subscribe({
+        next: (list) => {
+          const mapped = (list || []).map((o) => this.mapOrder(o));
+          // trier par date desc
+          mapped.sort((a, b) => (b.date > a.date ? 1 : -1));
+          this.orders.set(mapped);
+        },
+        error: (err) => {
+          console.error('getOrdersByUser error', err);
+          this.orders.set([]);
+        },
+        complete: () => this.loading.set(false),
+      });
   }
 
-  displayed() {
-    const f = this.filter();
-    return this.orders().filter(o => f === 'all' ? true : o.status === f);
-  }
+  // 🧠 mapping backend -> vue
+  private mapOrder(o: BackendOrder): OrderVM {
+    const status = o.status.toLowerCase() as OrderStatus;
+    const paymentMethod = o.paymentMethod.toLowerCase() as OrderVM['paymentMethod'];
 
-  badgeClass(s: Order['status']) {
+    const number = 'CMD-' + o._id.slice(-6).toUpperCase();
+
     return {
-      paid:       'bg-indigo-100 text-indigo-800',
+      id: o._id,
+      number,
+      date: o.createdAt,
+      total: o.total,
+      status,
+      paymentMethod,
+      items: (o.items || []).map((it) => ({
+        title: it.name,
+        qty: it.quantity,
+        price: it.price,
+      })),
+    };
+  }
+
+  displayed(): OrderVM[] {
+    const f = this.filter();
+    return this.orders().filter((o) => (f === 'all' ? true : o.status === f));
+  }
+
+  badgeClass(s: OrderStatus) {
+    return {
+      new: 'bg-indigo-100 text-indigo-800',
       processing: 'bg-amber-100 text-amber-800',
-      shipped:    'bg-blue-100 text-blue-800',
-      delivered:  'bg-emerald-100 text-emerald-800',
-      cancelled:  'bg-rose-100 text-rose-800',
+      shipped: 'bg-blue-100 text-blue-800',
+      delivered: 'bg-emerald-100 text-emerald-800',
+      cancelled: 'bg-rose-100 text-rose-800',
     }[s];
   }
 
-  async confirmCancel(o: Order) {
-    // règles : on autorise l’annulation si pas livré
-    if (o.status === 'delivered') return;
+  async confirmCancel(o: OrderVM) {
+    // on n’annule pas une commande livrée
+    if (o.status === 'delivered' || o.status === 'cancelled') return;
 
     const res = await Swal.fire({
       icon: 'warning',
@@ -62,26 +133,43 @@ export class AccountOrders implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Oui, annuler',
       cancelButtonText: 'Non',
-      confirmButtonColor: '#e11d48', // rose-600
+      confirmButtonColor: '#e11d48',
     });
 
     if (!res.isConfirmed) return;
 
-// 1) Mise à jour en mémoire
-const next: Order[] = this.orders().map(x =>
-  x.id === o.id ? { ...x, status: 'cancelled' as Order['status'] } : x
-);
-this.orders.set(next);
+    // 1) appel backend
+    this.http
+      .patch<BackendOrder>(`${this.apiUrl}/orders/${o.id}/status`, {
+        status: 'CANCELLED',
+      })
+      .subscribe({
+        next: (updated) => {
+          // 2) MAJ dans le signal
+          this.orders.update((list) =>
+            list.map((x) =>
+              x.id === o.id
+                ? { ...x, status: 'cancelled' as OrderStatus }
+                : x,
+            ),
+          );
 
-// 2) Persistance LS
-const all: Order[] = JSON.parse(localStorage.getItem(LS_ORDERS) || '[]');
-const idx = all.findIndex(x => x.id === o.id);
-if (idx >= 0) {
-  all[idx] = { ...all[idx], status: 'cancelled' as Order['status'] };
-  localStorage.setItem(LS_ORDERS, JSON.stringify(all));
-}
-
-
-    Swal.fire({ icon: 'success', title: 'Commande annulée', timer: 1300, showConfirmButton: false });
+          Swal.fire({
+            icon: 'success',
+            title: 'Commande annulée',
+            timer: 1300,
+            showConfirmButton: false,
+          });
+        },
+        error: (err) => {
+          console.error('cancel order error', err);
+          Swal.fire({
+            icon: 'error',
+            title: "Impossible d'annuler la commande",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        },
+      });
   }
 }

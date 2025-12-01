@@ -3,17 +3,38 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { Header } from '../../shared/header/header';
 import { Footer } from '../../shared/footer/footer';
-import { ProductStore, Product } from '../../services/product-store';
+
 import { CartService } from '../../services/cart.service';
 import Swal from 'sweetalert2';
-import { FakeStore } from '../../services/fakestore';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-import { take } from 'rxjs/operators';
 import { WishlistService } from '../../services/wishlist.service';
+import { ProductService, Product as BackendProduct } from '../../services/product.service';
+import { ReviewService } from '../../services/review.service';
+import { firstValueFrom } from 'rxjs';
 
 type Spec = { label: string; value: string };
-type Review = { author: string; rating: number; date: string; comment: string };
+
+type Review = {
+  id: string;
+  author: string;
+  rating: number;
+  date: string;
+  comment: string;
+};
+
+type ProductView = {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  basePrice: number;
+  image: string;
+  images: string[];
+  rating: number;
+  stock: number;
+  categorySlug?: string;
+};
 
 @Component({
   selector: 'app-product-detail',
@@ -23,30 +44,29 @@ type Review = { author: string; rating: number; date: string; comment: string };
 })
 export class ProductDetailPage implements OnInit {
   private router = inject(Router);
-
   private route = inject(ActivatedRoute);
-  private store = inject(ProductStore);
+  private productService = inject(ProductService);
   private cart = inject(CartService);
-  private fake = inject(FakeStore);
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
+  private wishlist = inject(WishlistService);
+  private reviewSvc = inject(ReviewService);
 
-  product?: Product;
-  similar: Product[] = [];
+  product?: ProductView;
+  similar: ProductView[] = [];
+
   images: string[] = [];
   current = 0;
 
   loading = false;
   error: any = null;
 
-  // infos additionnelles (lues depuis le produit si dispo)
   inStock = false;
   stockCount = 0;
   specs: Spec[] = [];
-  reviews: Review[] = []; // ⚠️ inclut les avis stockés en local
+  reviews: Review[] = [];
 
   qty = 1;
-  private wishlist = inject(WishlistService);
   isFav = false;
 
   // ---- Avis (form) ----
@@ -60,182 +80,168 @@ export class ProductDetailPage implements OnInit {
   get rf() {
     return this.reviewForm.controls;
   }
+  get rating(): number {
+    return Number(this.reviewForm.get('rating')?.value ?? 0);
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((pm) => {
-      const key = pm.get('id'); // peut être "12" ou "fs-5"
-      if (!key) {
+      const id = pm.get('id');
+      if (!id) {
         this.error = true;
         return;
       }
-      this.loadKey(key);
+      this.loadProduct(id);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
-  /** slug normalisé de catégorie pour comparaison stricte */
-  private exactCatSlug(c: string | undefined | null): string {
-    return (c ?? '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
 
-  /** similaires STRICTS : même catégorie exacte uniquement (pas de fallback, pas de mélange) */
-  private buildSimilarStrict(all: Product[], current: Product, limit = 8): Product[] {
-    const currId = current.id;
-    const exact = this.exactCatSlug(current.category);
+  // ========= Chargement produit + similaires =========
 
-    return all
-      .filter((p) => p && p.id !== currId && this.exactCatSlug(p.category) === exact)
-      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) // tri optionnel: mieux notés d’abord
-      .slice(0, limit);
-  }
-
-  // Regroupe les catégories locales + FakeStore dans des familles
-  private normalizeCat(c: string): string {
-    const s = (c || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '');
-
-    if (/(electronique|informatique|audio|gaming|accessoires|photo|electronics)/.test(s))
-      return 'tech';
-    if (/(maison|home|appliance)/.test(s)) return 'home';
-    if (/(beaute|beauty|cosmetic)/.test(s)) return 'beauty';
-    if (/(jewel|bijou|jewellery|jewelery)/.test(s)) return 'jewelry';
-    if (/(men|women|vetement|clothing|apparel)/.test(s)) return 'fashion';
-
-    return 'other';
-  }
-
-  private loadKey(key: string) {
+  private loadProduct(id: string) {
     this.loading = true;
     this.error = null;
 
-    this.store
-      .getOneByKey$(key)
-      .pipe(take(1))
-      .subscribe({
-        next: (p) => {
-          this.setProductData(p);
+    this.productService.getProducts().subscribe({
+      next: (arr) => {
+        const list = arr || [];
+        const found = list.find((p) => p._id === id);
 
-          this.store
-            .getAllMerged$()
-            .pipe(take(1))
-            .subscribe((all) => {
-              this.similar = this.buildSimilarStrict(all, p);
-            });
+        console.log('loadProduct id =', id, 'found =', found);
 
-          this.loading = false;
-        },
-        error: () => {
+        if (!found) {
           this.error = true;
           this.loading = false;
-        },
-      });
-  }
-  private load(id: number) {
-    this.loading = true;
-    this.error = null;
-
-    this.store
-      .getOne$(id)
-      .pipe(take(1))
-      .subscribe({
-        next: (p) => {
-          if (!p) {
-            this.error = true;
-            this.loading = false;
-            return;
-          }
-          this.setProductData(p);
-
-          this.store
-            .getAllMerged$()
-            .pipe(take(1))
-            .subscribe((all) => {
-              this.similar = this.buildSimilarStrict(all, p);
-            });
-
-          this.loading = false;
-        },
-        error: (e) => {
-          this.error = e;
-          this.loading = false;
-        },
-      });
-  }
-
-  private setProductData(p: Product) {
-    this.product = p;
-
-    const imgs = (p.images ?? []).filter(Boolean);
-    while (imgs.length < 3) imgs.push(p.image);
-    this.images = imgs.slice(0, 3);
-
-    this.stockCount = p.stock ?? 10;
-    this.inStock = this.stockCount > 0;
-    this.specs = p.specs ?? [];
-
-    // 1) avis du produit (si fournis par la source)
-    const base = p.reviews ?? [];
-
-    // 2) avis locaux (localStorage) — fusion
-    const local = this.loadLocalReviews(p.id);
-    this.reviews = [...local, ...base]; // choix: locals d’abord
-
-    // Pré-remplir l’auteur si l’utilisateur est logué
-    const u = this.auth.currentUser();
-    if (u && !this.reviewForm.value.author) {
-      this.reviewForm.patchValue({ author: `${u.firstName} ${u.lastName}`.trim() });
-    }
-    this.isFav = this.wishlist.isFavorite(Number(p.id));
-  }
-  toggleFav() {
-    if (!this.product) return;
-
-    const user = this.auth.currentUser(); // vérifie si connecté
-    if (!user) {
-      Swal.fire({
-        title: 'Connexion requise',
-        text: 'Veuillez vous connecter pour ajouter des produits à vos favoris 💙',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Se connecter',
-        cancelButtonText: 'Annuler',
-        confirmButtonColor: '#2563eb', // bleu
-        cancelButtonColor: '#6b7280', // gris
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.router.navigate(['/auth/signin']);
+          return;
         }
-      });
+
+        const vm = this.toViewModel(found);
+        this.product = vm;
+
+        this.images = vm.images;
+        this.stockCount = vm.stock;
+        this.inStock = vm.stock > 0;
+
+        // 🔹 Charger les avis depuis la BD
+        this.loadReviews(vm.id);
+
+        // 🔹 Pré-remplir l’auteur si utilisateur connecté
+        const u = this.auth.currentUser();
+        if (u && !this.reviewForm.value.author) {
+          this.reviewForm.patchValue({
+            author: `${u.firstName} ${u.lastName}`.trim(),
+          });
+        }
+
+        // 🔹 Favoris
+        this.isFav = this.wishlist.isFavorite(vm.id);
+
+        // 🔹 Produits similaires (même catégorie)
+        this.loadSimilar(found);
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('getProducts() error pour la fiche produit', err);
+        this.error = true;
+        this.loading = false;
+      },
+    });
+  }
+
+  private loadSimilar(source: BackendProduct) {
+    const sourceCat = this.normalizeCat(this.getCategorySlug(source));
+    if (!sourceCat) {
+      this.similar = [];
       return;
     }
 
-    // ✅ si connecté : on ajoute / retire le favori normalement
-    this.wishlist.toggle({
-      id: Number(this.product.id),
-      title: this.product.title,
-      price: this.product.price,
-      image: this.images[this.current] ?? this.product.image,
-    });
+    this.productService.getProducts().subscribe({
+      next: (all) => {
+        const list = all || [];
+        const meId = source._id;
 
-    this.isFav = this.wishlist.isFavorite(Number(this.product.id));
-
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      timer: 1200,
-      showConfirmButton: false,
-      icon: this.isFav ? 'success' : 'info',
-      title: this.isFav ? 'Ajouté aux favoris ❤' : 'Retiré des favoris',
+        this.similar = list
+          .filter((p) => {
+            if (!p || p._id === meId) return false;
+            const cat = this.normalizeCat(this.getCategorySlug(p));
+            return cat === sourceCat;
+          })
+          .map((p) => this.toViewModel(p))
+          .slice(0, 8);
+      },
+      error: () => {
+        this.similar = [];
+      },
     });
   }
 
-  // ⭐ notation produit principal
+  private loadReviews(productId: string) {
+    this.reviewSvc.getByProduct(productId).subscribe({
+      next: (list) => {
+        this.reviews = (list || []).map((r) => {
+          const fullName =
+            r.user && (r.user.firstName || r.user.lastName)
+              ? `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim()
+              : 'Client';
+
+          return {
+            id: r._id,
+            author: fullName || 'Client',
+            rating: r.rating,
+            comment: r.comment || '',
+            date: r.createdAt,
+          };
+        });
+      },
+      error: (err) => {
+        console.error('loadReviews error', err);
+        this.reviews = [];
+      },
+    });
+  }
+
+  // Conversion backend -> vue utilisée par le template
+  private toViewModel(p: BackendProduct): ProductView {
+    const imgs =
+      p.images && p.images.length
+        ? p.images.filter(Boolean)
+        : ['assets/placeholder-product.jpg'];
+
+    const base = p.price;
+    const final = p.promoPrice && p.promoPrice < p.price ? p.promoPrice : p.price;
+    const rating = (p as any).averageRating ?? 0;
+
+    let categorySlug = '';
+    if (typeof p.category === 'string') {
+      categorySlug = p.category;
+    } else if (p.category && typeof p.category === 'object') {
+      categorySlug = p.category.slug || p.category.name || '';
+    }
+
+    return {
+      id: p._id,
+      title: p.name,
+      description: p.description,
+      price: final,
+      basePrice: base,
+      image: imgs[0],
+      images: imgs.slice(0, 3),
+      rating,
+      stock: p.stock ?? 0,
+      categorySlug,
+    };
+  }
+
+  // ========= Galerie =========
+  select(i: number) {
+    this.current = i;
+  }
+  isActive(i: number) {
+    return this.current === i;
+  }
+
+  // ========= Stock & Note =========
   rateRounded(): number {
     return Math.floor(this.product?.rating ?? 0);
   }
@@ -243,7 +249,7 @@ export class ProductDetailPage implements OnInit {
     return this.product?.rating ?? 0;
   }
 
-  // 🛒 quantité
+  // ========= Quantité & Panier =========
   decQty() {
     this.qty = Math.max(1, this.qty - 1);
   }
@@ -270,73 +276,101 @@ export class ProductDetailPage implements OnInit {
     });
   }
 
-  // 🎯 galerie
-  select(i: number) {
-    this.current = i;
-  }
-  isActive(i: number) {
-    return this.current === i;
-  }
+  // ========= Favoris / Wishlist =========
+  toggleFav() {
+    if (!this.product) return;
 
-  // helpers *ngFor
-  trackByLabel = (_: number, s: Spec) => s.label;
-  trackByReview = (_: number, r: Review) => r.author + r.date;
-  starLine(n: number) {
-    return Array.from({ length: 5 }, (_, i) => i < Math.floor(n));
-  }
-
-  // ========= Avis : LocalStorage =========
-  private lsKeyForReviews(productId: number | string) {
-    return `app.reviews.${productId}`;
-  }
-
-  private loadLocalReviews(productId: number | string): Review[] {
-    try {
-      return JSON.parse(localStorage.getItem(this.lsKeyForReviews(productId)) || '[]');
-    } catch {
-      return [];
+    const user = this.auth.currentUser();
+    if (!user) {
+      Swal.fire({
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour ajouter des produits à vos favoris 💙',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Se connecter',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/auth/signin']);
+        }
+      });
+      return;
     }
+
+    this.wishlist.toggle({
+      id: this.product.id,
+      title: this.product.title,
+      price: this.product.price,
+      image: this.images[this.current] ?? this.product.image,
+    });
+
+    this.isFav = this.wishlist.isFavorite(this.product.id);
+
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      timer: 1200,
+      showConfirmButton: false,
+      icon: this.isFav ? 'success' : 'info',
+      title: this.isFav ? 'Ajouté aux favoris ❤' : 'Retiré des favoris',
+    });
   }
 
-  private saveLocalReviews(productId: number | string, items: Review[]) {
-    localStorage.setItem(this.lsKeyForReviews(productId), JSON.stringify(items));
-  }
-
+  // ========= Avis : en BD =========
   setRating(n: number) {
     this.reviewForm.patchValue({ rating: n });
   }
 
   async submitReview() {
     if (!this.product) return;
+
+    const user = this.auth.currentUser();
+    if (!user?.id) {
+      const res = await Swal.fire({
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour laisser un avis 💙',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Se connecter',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+      });
+
+      if (res.isConfirmed) {
+        this.router.navigate(['/auth/signin']);
+      }
+      return;
+    }
+
     if (this.reviewForm.invalid) {
       this.reviewForm.markAllAsTouched();
       return;
     }
 
     const value = this.reviewForm.getRawValue();
-    const newItem: Review = {
-      author: value.author!.trim(),
-      rating: Math.max(1, Math.min(5, Number(value.rating))),
-      comment: (value.comment || '').trim(),
-      date: new Date().toISOString(),
-    };
+    const rating = Math.max(1, Math.min(5, Number(value.rating)));
+    const comment = (value.comment || '').trim();
+    if (!comment) return;
 
     this.submittingReview = true;
     try {
-      // 1) sauvegarde localStorage
-      const currentLocal = this.loadLocalReviews(this.product.id);
-      const nextLocal = [newItem, ...currentLocal];
-      this.saveLocalReviews(this.product.id, nextLocal);
+      await firstValueFrom(
+        this.reviewSvc.create({
+          productId: this.product.id,
+          userId: user.id,
+          rating,
+          comment,
+        })
+      );
 
-      // 2) rafraîchir la liste affichée (locals + base)
-      const base = this.product.reviews ?? [];
-      this.reviews = [...nextLocal, ...base];
+      this.loadReviews(this.product.id);
 
-      // 3) reset UI
       this.reviewForm.patchValue({ rating: 0, comment: '' });
       this.reviewMsg = 'Merci pour votre avis !';
 
-      // Toast
       await Swal.fire({
         toast: true,
         position: 'top-end',
@@ -347,11 +381,39 @@ export class ProductDetailPage implements OnInit {
       });
 
       setTimeout(() => (this.reviewMsg = ''), 2000);
+    } catch (err) {
+      console.error('submitReview error', err);
+      await Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: "Impossible d'enregistrer votre avis",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } finally {
       this.submittingReview = false;
     }
   }
-  get rating(): number {
-    return Number(this.reviewForm.get('rating')?.value ?? 0);
+
+  // helpers *ngFor
+  trackByLabel = (_: number, s: Spec) => s.label;
+  trackByReview = (_: number, r: Review) => r.id;
+  starLine(n: number) {
+    return Array.from({ length: 5 }, (_, i) => i < Math.floor(n));
+  }
+
+  private getCategorySlug(p: BackendProduct): string {
+    if (!p.category) return '';
+    if (typeof p.category === 'string') return p.category;
+    return p.category.slug || p.category.name || '';
+  }
+
+  private normalizeCat(c: string): string {
+    return (c || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .trim();
   }
 }

@@ -3,29 +3,25 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Product } from '../../../services/product-store';
+import { Product } from '../../../services/product.service';
 import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
-import { Header } from "../../../shared/header/header";
-import { Footer } from "../../../shared/footer/footer";
 
 @Component({
   selector: 'app-product-grid',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, Header, Footer],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './product-grid.html',
 })
 export class ProductGrid implements OnChanges {
   @Input() products: Product[] = [];
   @Input() categories: string[] = [];
-
   @Input() initialCategory: string = '';
 
   // état filtres/tri
   selectedCategory = '';
   priceMax = 2000;
   maxPriceCeil = 2000;
-  minRating = 0;
   sortBy = '';
   searchQuery = '';
 
@@ -39,26 +35,23 @@ export class ProductGrid implements OnChanges {
   constructor(private cart: CartService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Quand la liste de produits change, on recalcule le prix max
     if (changes['products']?.currentValue) {
-      const maxp = Math.max(...this.products.map(p => p.price || 0), 0);
+      const maxp = Math.max(
+        ...this.products.map((p) => p.promoPrice ?? p.price ?? 0),
+        0
+      );
       this.maxPriceCeil = Math.ceil(maxp || 2000);
       this.priceMax = this.maxPriceCeil;
     }
 
-    // Appliquer la catégorie initiale quand elle arrive du parent
+    // Catégorie initiale venant du parent (URL)
     if (changes['initialCategory']) {
       this.selectedCategory = this.initialCategory || '';
     }
 
-
     this.applyAll();
   }
-
-
-
-
-
-
 
   applyAll() {
     this.filtered = this.computeFiltered();
@@ -69,27 +62,47 @@ export class ProductGrid implements OnChanges {
   private computeFiltered(): Product[] {
     let arr = [...this.products];
 
+    // 🔹 Filtre par catégorie (string ou objet {slug})
     if (this.selectedCategory) {
-      arr = arr.filter(p => p.category === this.selectedCategory);
+      arr = arr.filter((p) => {
+        const catSlug =
+          typeof p.category === 'string'
+            ? p.category
+            : p.category?.slug;
+        return catSlug === this.selectedCategory;
+      });
     }
 
+    // 🔹 Recherche sur name + description
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
-      arr = arr.filter(p =>
-        (p.title || '').toLowerCase().includes(q) ||
+      arr = arr.filter((p) =>
+        (p.name || '').toLowerCase().includes(q) ||
         (p.description || '').toLowerCase().includes(q)
       );
     }
 
-    arr = arr.filter(p => p.price >= 0 && p.price <= this.priceMax);
+    // 🔹 Filtre prix (promoPrice prioritaire)
+    arr = arr.filter((p) => {
+      const price = p.promoPrice ?? p.price ?? 0;
+      return price >= 0 && price <= this.priceMax;
+    });
 
-    if (this.minRating > 0) {
-      arr = arr.filter(p => (p.rating || 0) >= this.minRating);
+    // 🔹 Tri
+    if (this.sortBy === 'price-asc') {
+      arr.sort(
+        (a, b) =>
+          (a.promoPrice ?? a.price ?? 0) -
+          (b.promoPrice ?? b.price ?? 0)
+      );
     }
-
-    if (this.sortBy === 'price-asc') arr.sort((a, b) => a.price - b.price);
-    if (this.sortBy === 'price-desc') arr.sort((a, b) => b.price - a.price);
-    if (this.sortBy === 'rating') arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    if (this.sortBy === 'price-desc') {
+      arr.sort(
+        (a, b) =>
+          (b.promoPrice ?? b.price ?? 0) -
+          (a.promoPrice ?? a.price ?? 0)
+      );
+    }
 
     return arr;
   }
@@ -114,10 +127,24 @@ export class ProductGrid implements OnChanges {
   }
 
   addToCart(p: Product) {
-    this.cart.addToCart({ id: p.id, name: p.title, price: p.price, image: p.image, quantity: 1 });
-    Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Ajouté au panier 🛒', timer:1200, showConfirmButton:false });
-  }
+    const price = p.promoPrice ?? p.price ?? 0;
+    const image = p.images?.[0] ?? '';
 
-  rateRounded(p: Product): number { return Math.floor(p?.rating ?? 0); }
-  rateRaw(p: Product): number { return p?.rating ?? 0; }
+    this.cart.addToCart({
+      id: p._id,          
+      name: p.name,
+      price,
+      image,
+      quantity: 1,
+    });
+
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Ajouté au panier 🛒',
+      timer: 1200,
+      showConfirmButton: false,
+    });
+  }
 }

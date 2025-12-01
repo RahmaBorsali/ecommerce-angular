@@ -17,21 +17,38 @@ import { AuthService } from '../../services/auth.service';
 export class CartItems implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
-
-  Math = Math; // pour l’utilisation dans le template
   private cartSvc = inject(CartService);
+
+  Math = Math;
 
   cart: CartItem[] = [];
   meta: CartMeta = this.cartSvc.getMeta();
   couponCode = '';
 
+  // écoute l’événement custom déclenché par CartService
   private onCartUpdated = () => this.load();
+
+  // écoute les changements localStorage (autres onglets)
   private onStorage = (e: StorageEvent) => {
-    if (e.key === 'cart' || e.key === 'cart_meta' || e.key === null) this.load();
+    if (!e.key) {
+      // tout le storage a changé
+      this.load();
+      return;
+    }
+
+    // on surveille seulement les clés de panier / meta
+    if (
+      e.key.startsWith('app.cart.') ||
+      e.key.startsWith('app.cartmeta.')
+    ) {
+      this.load();
+    }
   };
 
   ngOnInit(): void {
+    // 🔹 plus d'appel à syncFromServer ici
     this.load();
+
     window.addEventListener('cartUpdated', this.onCartUpdated);
     window.addEventListener('storage', this.onStorage);
   }
@@ -81,6 +98,7 @@ export class CartItems implements OnInit, OnDestroy {
       cancelButtonText: 'Annuler',
       confirmButtonColor: '#dc2626',
     });
+
     if (res.isConfirmed) {
       this.cartSvc.removeFromCart(item.id);
       this.load();
@@ -150,6 +168,7 @@ export class CartItems implements OnInit, OnDestroy {
     });
     this.load();
   }
+
   async proceedToCheckout() {
     const user = this.auth.currentUser();
 
@@ -161,18 +180,17 @@ export class CartItems implements OnInit, OnDestroy {
         showCancelButton: true,
         confirmButtonText: 'Se connecter',
         cancelButtonText: 'Annuler',
-        confirmButtonColor: '#2563eb', // bleu
-        cancelButtonColor: '#6b7280', // gris
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
       });
 
       if (res.isConfirmed) {
         this.router.navigate(['/auth/signin']);
       }
-
-      return; //  Stop ici si non connecté
+      return;
     }
 
-    //  Si connecté → aller vers checkout
+    // ✅ User connecté → go checkout
     this.router.navigate(['/checkout']);
   }
 }

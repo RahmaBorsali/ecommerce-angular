@@ -4,16 +4,21 @@ import { Observable, tap } from 'rxjs';
 
 // --------- Types ---------
 export type User = {
-  id: string;          // toujours défini côté front
-  _id?: string;        // au cas où le backend renvoie _id
+  id: string;
+  _id?: string;
   firstName: string;
   lastName: string;
   email: string;
-  address: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  phone?: string;
+  avatarUrl?: string | null;
   createdAt?: string;
   isVerified?: boolean;
-  // on NE garde PAS password ici en front pour le user connecté
 };
+
+
 
 export type RegisterPayload = {
   firstName: string;
@@ -26,6 +31,7 @@ export type RegisterPayload = {
 export type LoginResponse = {
   user: User;
   token: string;
+  refreshToken: string;
 };
 
 const LS_SESSION = 'app.session';
@@ -62,6 +68,7 @@ export class AuthService {
           const session = {
             userId,
             token: res.token,
+            refreshToken: res.refreshToken,
             user: normalizedUser,
           };
 
@@ -98,6 +105,7 @@ export class AuthService {
     | {
         userId: string;
         token: string;
+         refreshToken: string;
         user: User;
       }
     | null {
@@ -112,4 +120,55 @@ export class AuthService {
     const session = this.readSession();
     return !!(session && session.token);
   }
+  // ---------------- PROFILE ----------------
+
+// GET /users/:id
+getProfile(userId: string) {
+  return this.http.get<User>(`${this.apiUrl}/users/${userId}`);
+}
+
+// PUT /users/:id
+updateProfile(userId: string, data: any) {
+  return this.http.put<User>(`${this.apiUrl}/users/${userId}`, data).pipe(
+    tap((updated) => {
+      this.updateSessionUser(updated);
+    })
+  );
+}
+
+uploadAvatar(userId: string, file: File) {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  return this.http
+    .post<{ user: User }>(`${this.apiUrl}/users/${userId}/avatar`, formData)
+    .pipe(
+      tap((res) => {
+        this.updateSessionUser(res.user);
+      })
+    );
+}
+
+// met à jour la session
+private updateSessionUser(updated: User) {
+  const session = this.readSession();
+  if (!session) return;
+
+  const normalized: User = {
+    ...updated,
+    id: (updated as any).id ?? (updated as any)._id ?? session.userId,
+  };
+
+  session.user = normalized;
+  session.userId = normalized.id;
+
+  localStorage.setItem(LS_SESSION, JSON.stringify(session));
+  window.dispatchEvent(new Event('authChanged'));
+}
+
+
+  setCurrentUser(u: User) {
+    this.updateSessionUser(u);
+  }
+
 }
