@@ -1,7 +1,32 @@
 // src/app/services/order.service.ts
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
+// src/app/services/order.service.ts
+export type OrderItem = {
+  product: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type Order = {
+  _id: string;
+  user?: string;
+  items: OrderItem[];
+  subtotal: number;
+  discount: number;
+  shippingCost: number;
+  total: number;
+  couponCode?: string;
+  shippingAddress?: any;
+  paymentMethod: 'CARD' | 'PAYPAL' | 'APPLEPAY' | 'GOOGLEPAY';
+  paymentStatus: 'PENDING' | 'PAID' | 'FAILED';
+  status: 'NEW' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type OrderItemPayload = {
   productId: string;
@@ -25,33 +50,78 @@ export type CreateOrderPayload = {
   paymentMethod: 'CARD' | 'PAYPAL' | 'APPLEPAY' | 'GOOGLEPAY';
 };
 
-export type Order = {
-  _id: string;
-  total: number;
-  status: string;
-  createdAt: string;
-  // tu peux ajouter d'autres champs si tu veux
-};
-
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000'; // comme ProductService
+  private apiUrl = 'http://localhost:3000';
 
-  createOrder(payload: CreateOrderPayload): Observable<Order> {
-    return this.http.post<Order>(`${this.apiUrl}/orders`, payload);
+
+  private getAuthOptions() {
+    const raw = localStorage.getItem('app.session');
+    if (!raw) {
+      console.warn('[OrderService] pas de app.session');
+      return {};
+    }
+
+    try {
+      const session = JSON.parse(raw);
+      const token = session?.token;
+
+      if (!token) {
+        console.warn('[OrderService] app.session sans token');
+        return {};
+      }
+
+      return {
+        headers: new HttpHeaders({
+          Authorization: `Bearer ${token}`,
+        }),
+      };
+    } catch (e) {
+      console.error('[OrderService] parse app.session error', e);
+      return {};
+    }
   }
 
   getOrdersByUser(userId: string): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/orders/user/${userId}`);
+    return this.http.get<Order[]>(
+      `${this.apiUrl}/orders/user/${userId}`,
+      this.getAuthOptions()
+    );
   }
 
-  // Pour plus tard : admin
+  // POST /orders
+  createOrder(payload: CreateOrderPayload): Observable<Order> {
+    return this.http.post<Order>(
+      `${this.apiUrl}/orders`,
+      payload,
+      this.getAuthOptions()
+    );
+  }
+
+
+
+  // GET /orders (admin)
   getAllOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/orders`);
+    return this.http.get<Order[]>(
+      `${this.apiUrl}/orders`,
+      this.getAuthOptions()
+    );
   }
+
+  // pour les compteurs
   getByUser(userId: string): Observable<any[]> {
-    // adapte l’URL si besoin (ex: /orders/user/:id ou /orders?userId=)
-    return this.http.get<any[]>(`${this.apiUrl}/orders/user/${userId}`);
+    return this.http.get<any[]>(
+      `${this.apiUrl}/orders/user/${userId}`,
+      this.getAuthOptions()
+    );
   }
+  cancelOrder(orderId: string): Observable<Order> {
+  return this.http.patch<Order>(
+    `${this.apiUrl}/orders/${orderId}/status`,
+    { status: 'CANCELLED' },
+    this.getAuthOptions()
+  );
+}
+
 }

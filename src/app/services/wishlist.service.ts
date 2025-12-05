@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Product } from './product.service';
 import { Observable } from 'rxjs';
@@ -32,8 +32,34 @@ export class WishlistService {
 
   private saveLocal() {
     localStorage.setItem(this.LS_KEY, JSON.stringify(this.cache));
-    // 🔔 préviens tout le monde (AccountLayout, etc.)
     window.dispatchEvent(new Event('wishlistUpdated'));
+  }
+
+  // --------- Auth headers ----------
+  private getAuthOptions() {
+    const raw = localStorage.getItem('app.session');
+    if (!raw) return {};
+
+    try {
+      const session = JSON.parse(raw);
+      const token = session?.token;
+
+      if (!token) return {};
+
+      return {
+        headers: new HttpHeaders({
+          Authorization: `Bearer ${token}`,
+        }),
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  // Pour DELETE avec body + headers
+  private getAuthOptionsWithBody(body: any) {
+    const opts = this.getAuthOptions();
+    return { ...opts, body };
   }
 
   // --------- API publique ----------
@@ -54,10 +80,8 @@ export class WishlistService {
     const user = this.auth.currentUser();
     if (!user?.id) return;
 
-    // on réutilise getByUser pour que tout soit cohérent
     this.getByUser(user.id).subscribe({
       next: (list: any[]) => {
-        // ici, list = tableau de produits que renvoie ton backend
         this.cache = (list || []).map((p: any) => ({
           id: p._id,
           title: p.name,
@@ -74,7 +98,6 @@ export class WishlistService {
   toggle(item: WishItem) {
     const user = this.auth.currentUser();
     if (!user?.id) {
-      // tu bloques déjà côté UI si pas connecté
       return;
     }
 
@@ -86,23 +109,28 @@ export class WishlistService {
     } else {
       this.cache.push(item);
     }
-    this.saveLocal(); // 🔔 => wishlistUpdated → AccountLayout.refreshAllCounters()
+    this.saveLocal();
 
     // 2) mise à jour backend
     if (already) {
       this.http
-        .delete(`${this.apiUrl}/wishlist`, {
-          body: { userId: user.id, productId: item.id },
-        })
+        .delete(
+          `${this.apiUrl}/wishlist`,
+          this.getAuthOptionsWithBody({
+            userId: user.id,
+            productId: item.id,
+          })
+        )
         .subscribe({
           error: (err) => console.error('removeFromWishlist error', err),
         });
     } else {
       this.http
-        .post(`${this.apiUrl}/wishlist`, {
-          userId: user.id,
-          productId: item.id,
-        })
+        .post(
+          `${this.apiUrl}/wishlist`,
+          { userId: user.id, productId: item.id },
+          this.getAuthOptions()
+        )
         .subscribe({
           error: (err) => console.error('addToWishlist error', err),
         });
@@ -113,16 +141,19 @@ export class WishlistService {
   remove(productId: string) {
     const user = this.auth.currentUser();
 
-    // local d’abord
     this.cache = this.cache.filter((x) => x.id !== productId);
     this.saveLocal();
 
     if (!user?.id) return;
 
     this.http
-      .delete(`${this.apiUrl}/wishlist`, {
-        body: { userId: user.id, productId },
-      })
+      .delete(
+        `${this.apiUrl}/wishlist`,
+        this.getAuthOptionsWithBody({
+          userId: user.id,
+          productId,
+        })
+      )
       .subscribe({
         error: (err) => console.error('removeFromWishlist error', err),
       });
@@ -131,21 +162,26 @@ export class WishlistService {
   clearAll() {
     const user = this.auth.currentUser();
 
-    // 1) vider côté front
     this.cache = [];
     this.saveLocal();
 
-    // 2) vider côté backend si connecté
     if (!user?.id) return;
 
-    this.http.delete(`${this.apiUrl}/wishlist/clear/${user.id}`).subscribe({
-      error: (err) => console.error('clearWishlist error', err),
-    });
+    this.http
+      .delete(
+        `${this.apiUrl}/wishlist/clear/${user.id}`,
+        this.getAuthOptions()
+      )
+      .subscribe({
+        error: (err) => console.error('clearWishlist error', err),
+      });
   }
 
   /** 🔵 pour AccountLayout : récupère les favoris depuis le backend */
   getByUser(userId: string): Observable<Product[]> {
-    // adapte si ton backend c’est /wishlist/user/:id
-    return this.http.get<Product[]>(`${this.apiUrl}/wishlist/${userId}`);
+    return this.http.get<Product[]>(
+      `${this.apiUrl}/wishlist/${userId}`,
+      this.getAuthOptions()
+    );
   }
 }

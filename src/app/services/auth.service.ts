@@ -52,33 +52,41 @@ export class AuthService {
   }
 
   // ================== LOGIN (pour plus tard, backend) ==================
-  login(email: string, password: string): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password })
-      .pipe(
-        tap((res) => {
-          const rawUser = res.user as any;
-          const userId: string = (rawUser.id ?? rawUser._id) as string;
+    login(email: string, password: string): Observable<LoginResponse> {
+  return this.http
+    .post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password })
+    .pipe(
+      tap((res) => {
+        const rawUser = res.user as any;
+        const userId: string = (rawUser.id ?? rawUser._id) as string;
 
-          const normalizedUser: User = {
-            ...rawUser,
-            id: userId,
-          };
+        const normalizedUser: User = {
+          ...rawUser,
+          id: userId,
+        };
 
-          const session = {
-            userId,
-            token: res.token,
-            refreshToken: res.refreshToken,
-            user: normalizedUser,
-          };
+        const session = {
+          userId,
+          token: res.token,
+          refreshToken: res.refreshToken,
+          user: normalizedUser,
+        };
 
-          localStorage.setItem(LS_SESSION, JSON.stringify(session));
-          window.dispatchEvent(new Event('authChanged'));
+        // 🔹 ta logique existante
+        localStorage.setItem(LS_SESSION, JSON.stringify(session));
 
-          res.user = normalizedUser;
-        })
-      );
-  }
+        // 🔹 IMPORTANT pour les services sécurisés
+        localStorage.setItem('accessToken', res.token);
+        localStorage.setItem('refreshToken', res.refreshToken);
+
+        window.dispatchEvent(new Event('authChanged'));
+
+        res.user = normalizedUser;
+      })
+    );
+}
+
+
 
   // ================== LOGOUT ==================
   logout() {

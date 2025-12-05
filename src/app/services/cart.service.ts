@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 
 export type CartItem = {
-  id: string;          // ✅ string (Mongo _id du produit)
+  id: string;
   name: string;
   price: number;
   image: string;
@@ -130,18 +130,39 @@ export class CartService {
   }
 
   addToCart(item: CartItem) {
-    // 🧠 local d’abord
-    const cart = this.getCart();
-    const i = cart.findIndex((x) => x.id === item.id);
-    if (i >= 0) {
-      cart[i].quantity += item.quantity;
-    } else {
-      cart.push(item);
-    }
-    this.setCart(cart);
+    const current = this.getCart();
+    const idx = current.findIndex((x) => x.id === item.id);
 
-    // 🗄️ si user connecté → sync backend
-    this.syncAddToServer(item);
+    let next: CartItem[];
+
+    if (idx >= 0) {
+      next = current.map((x, i) =>
+        i === idx
+          ? {
+              ...x,
+              quantity: x.quantity + (item.quantity || 1),
+            }
+          : x
+      );
+    } else {
+      const newItem: CartItem = {
+        id: String(item.id),
+        name: item.name,
+        price: Number(item.price) || 0,
+        image: item.image ?? '',
+        quantity: item.quantity > 0 ? item.quantity : 1,
+      };
+
+      next = [...current, newItem];
+    }
+
+    this.setCart(next);
+
+    // 💾 on ne sync que pour l’item en plus, c’est ok
+    this.syncAddToServer({
+      ...item,
+      quantity: item.quantity > 0 ? item.quantity : 1,
+    });
   }
 
   updateQuantity(id: string, qty: number) {
@@ -199,11 +220,7 @@ export class CartService {
     return 0;
   }
 
-  calcShipping(
-    subtotal: number,
-    meta: CartMeta,
-    opts?: { express?: boolean }
-  ): number {
+  calcShipping(subtotal: number, meta: CartMeta, opts?: { express?: boolean }): number {
     if (subtotal <= 0) return 0;
 
     const fee = meta.shippingFee ?? this.defaultMeta.shippingFee;
@@ -232,17 +249,15 @@ export class CartService {
     const user = this.auth.currentUser();
     if (!user?.id) return;
 
-    this.http
-      .get<BackendCart>(`${this.apiUrl}/cart/user/${user.id}`)
-      .subscribe({
-        next: (cart) => {
-          const items = this.mapBackendCartToLocal(cart);
-          this.setCart(items);
-        },
-        error: (err) => {
-          console.error('syncFromServer error', err);
-        },
-      });
+    this.http.get<BackendCart>(`${this.apiUrl}/cart/user/${user.id}`).subscribe({
+      next: (cart) => {
+        const items = this.mapBackendCartToLocal(cart);
+        this.setCart(items);
+      },
+      error: (err) => {
+        console.error('syncFromServer error', err);
+      },
+    });
   }
 
   private syncAddToServer(item: CartItem) {
@@ -304,14 +319,12 @@ export class CartService {
     const user = this.auth.currentUser();
     if (!user?.id) return;
 
-    this.http
-      .delete(`${this.apiUrl}/cart/clear/${user.id}`)
-      .subscribe({
-        next: () => {
-          // backend OK, local déjà vidé
-        },
-        error: (err) => console.error('cart/clear error', err),
-      });
+    this.http.delete(`${this.apiUrl}/cart/clear/${user.id}`).subscribe({
+      next: () => {
+        // backend OK, local déjà vidé
+      },
+      error: (err) => console.error('cart/clear error', err),
+    });
   }
 
   // ---------- MIGRATION GUEST → USER (déjà discuté) ----------
