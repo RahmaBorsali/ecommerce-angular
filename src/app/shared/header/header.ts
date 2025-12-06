@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, HostListener, ElementRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, HostListener, ElementRef ,ChangeDetectorRef} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService, User } from '../../services/auth.service';
@@ -25,10 +25,17 @@ export class Header implements OnInit, OnDestroy {
 
   currentUser: User | null = null;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private cdr: ChangeDetectorRef ) {}
 
-  private onAuthChanged = () => this.refreshAuth();
-  private onCartEvents = () => this.updateCartCount();
+   private onAuthChanged = () => {
+    this.refreshAuth();
+    this.cdr.detectChanges();
+  };
+
+  private onCartEvents = () => {
+    this.updateCartCount();
+    this.cdr.detectChanges();   
+  };
 
   ngOnInit(): void {
     this.updateCartCount();
