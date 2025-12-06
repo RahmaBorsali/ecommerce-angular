@@ -16,7 +16,6 @@ export const authGuard: CanActivateFn = (route, state): boolean | UrlTree => {
   }
 
   // Sinon -> redirection vers /auth/signin
-  // (optionnel: on passe returnUrl pour revenir après login)
   return router.createUrlTree(['/auth/signin'], {
     queryParams: { returnUrl: state.url },
   });
